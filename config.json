@@ -1,0 +1,16 @@
+{
+    "pid": "fljmamufiym5fktz",
+    "uuid": "tuya461dbc63aeeb991f",
+    "authkey": "c8X4PR4wx1gMFaQlaZu5dfgVvVRwB8Ug",
+    "storage_path": "./",
+    "sw_ver": "1.0.0",
+    "log_level": 4,
+    "tuya": {
+        "bt": {
+            "enable_hb": 1,
+            "scan_timeout": 60,
+            "mode": 5,
+            "sw_ver": "1.0.0"
+        }
+    }
+}
