@@ -41,7 +41,7 @@ LINKFLAGS += `pkg-config --libs libmodbus`
 LINKFLAGS += `pkg-config --libs liblua`
 
 CCFLAGS = \
-	-g -fPIC -Werror=unused-function
+	-g -fPIC -Werror=unused-function -MMD
 CCFLAGS += `pkg-config --cflags libmodbus`
 CCFLAGS += `pkg-config --cflags liblua`
 
@@ -62,6 +62,7 @@ USER_SRC_BASE_DIR = ./src
 USER_SRC_BASE_DIR += ./3rd-party
 
 USER_INC_BASE_DIR = ./include
+USER_INC_BASE_DIR += ./src
 USER_INC_BASE_DIR += ./3rd-party
 
 USER_INC_BASE_DIR += ./library/include
@@ -81,6 +82,8 @@ USER_INCS = $(addprefix -I ,  $(shell find $(USER_INC_BASE_DIR) -type d) )
 USER_OBJS = $(addsuffix .o, $(USER_SRCS))
 #user的实际obj地址
 USER_OBJS_OUT =  $(addprefix $(OUTPUT_DIR_OBJS)/, $(USER_OBJS))
+
+DEPENDS := $(addsuffix .d,$(USER_SRCS))
 
 all: pack
 
@@ -103,7 +106,7 @@ $(OUTPUT_DIR_OBJS)/%.cpp.o: %.cpp
 
 $(OUTPUT_DIR_OBJS)/%.s.o: %.s
 	@mkdir -p $(dir $@);
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $< 
 
 $(OUTPUT_DIR_OBJS)/%.S.o: %.S
 	@mkdir -p $(dir $@);
@@ -113,3 +116,5 @@ $(OUTPUT_DIR_OBJS)/%.S.o: %.S
 .PHONY: all clean SHOWARGS build_app pack
 clean:
 	rm -rf $(OUTPUT_DIR)
+	
+-include $(DEPENDS)
