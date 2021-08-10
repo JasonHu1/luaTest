@@ -1,10 +1,14 @@
-APP_BIN_NAME=demo_modbus
+APP_BIN_NAME=modbus_server
 USER_SW_VER=1.0.0
 
 ROOT_DIR ?= $(shell pwd)
-COMPILE_PREX ?=~/toolchains/gcc-linaro-6.2.1-2016.11/bin/arm-linux-gnueabihf-
+
+#COMPILE_PREX ?=~/toolchains/gcc-linaro-6.2.1-2016.11/bin/arm-linux-gnueabihf-
+COMPILE_PREX ?=
 USER_LINK_FLAGS ?=
-LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_gcc-linaro-621-201611_3.0.1-beta.263)
+#LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_gcc-linaro-621-201611_3.0.1-beta.263)
+LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.224)
+
 
 -include ./build/build_param
 
@@ -30,10 +34,10 @@ APP_PACK = ./build/pack.sh
 
 LINKFLAGS = \
         -L$(LIB_DIR)/sdk/lib -ltuya_gw_ext_sdk -pthread -lm
-LINKFLAGS += -L./library/lib -lmodbus -llua
+#LINKFLAGS += -L./library/lib -lmodbus -llua
 
 LINKFLAGS += $(USER_LINK_FLAGS)
-#LINKFLAGS += `pkg-config --libs libmodbus`
+LINKFLAGS += `pkg-config --libs libmodbus`
 LINKFLAGS += `pkg-config --libs liblua`
 
 CCFLAGS = \
