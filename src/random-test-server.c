@@ -47,7 +47,7 @@ typedef struct
 
 #define FD_RANK_SERIAL_START    0
 
-int g_debugLevel=0;
+int g_debug_level=LOG_INFO;
 int gSerialNm=1;
 int gTcpClientNm=0;
 int gTcpPiClientNm=0;
@@ -309,7 +309,7 @@ int main(int argc, char*argv[])
         perror("epoll_create");
         exit(1);
     }
-    vdbg_printf("11111");
+    vLOG_APP(LOG_INFO,"11111");
     printf("%s<%d>\r",__FUNCTION__,__LINE__);
    
     
@@ -321,7 +321,7 @@ int main(int argc, char*argv[])
 
     for (;;) {
         gTcpClientNm = socketSeverGetNumClients();
-        vdbg_printf("gTcpClientNm=%d",gTcpClientNm);
+        vLOG_INFO("gTcpClientNm=%d",gTcpClientNm);
         LocalSocketRecord_t *tsock=gpTcpClientList;
         for(i=0;i<gTcpClientNm;i++){
             vdbg_printf("add tsock=%d",tsock->socketFd);
@@ -333,7 +333,7 @@ int main(int argc, char*argv[])
             close(epollfd);
             exit(1);
         }
-        vdbg_printf("nfds=%d",nfds);
+        vLOG_MODULE1(LOG_INFO,"nfds=%d",nfds);
         if(nfds){
             vdbg_printf("000");
             for (int n = 0; n < nfds; n++) {
