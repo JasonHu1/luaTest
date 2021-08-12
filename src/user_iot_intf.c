@@ -72,6 +72,8 @@ OPERATE_RET user_svc_init(VOID *cb)
 
     tuya_user_svc_init(cb);
 
+    tuya_user_dev_svc_init(ty_sdk_cfg);
+
     return ret;
 }
 
@@ -125,6 +127,9 @@ OPERATE_RET user_svc_start(VOID *cb)
     tuya_iot_sdk_reg_net_stat_cb(get_nwk_stat, get_wifi_nwk_stat);
 
     tuya_user_svc_start(cb);
+
+    /* 用户业务 */
+    tuya_user_dev_svc_start(ty_sdk_cfg);
 
     return op_ret;
 }
@@ -226,3 +231,5 @@ OPERATE_RET user_iot_init(IN CONST CHAR_T *str_cfg)
 
     return op_ret;
 }
+
+

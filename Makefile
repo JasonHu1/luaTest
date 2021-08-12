@@ -7,7 +7,7 @@ ROOT_DIR ?= $(shell pwd)
 COMPILE_PREX ?=
 USER_LINK_FLAGS ?=
 #LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_gcc-linaro-621-201611_3.0.1-beta.263)
-LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.224)
+LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266)
 
 
 -include ./build/build_param
@@ -98,11 +98,11 @@ build_app: $(USER_OBJS_OUT)
 
 $(OUTPUT_DIR_OBJS)/%.c.o: %.c
 	@mkdir -p $(dir $@);
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $< 
 
 $(OUTPUT_DIR_OBJS)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@);
-	$(CPP) $(CFLAGS) $(CPPFLAGS) -o $@ -c $<
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -o $@ -c $< 
 
 $(OUTPUT_DIR_OBJS)/%.s.o: %.s
 	@mkdir -p $(dir $@);
@@ -110,7 +110,7 @@ $(OUTPUT_DIR_OBJS)/%.s.o: %.s
 
 $(OUTPUT_DIR_OBJS)/%.S.o: %.S
 	@mkdir -p $(dir $@);
-	$(CC) $(CFLAGS) -D__ASSEMBLER__ -o $@ -c $<
+	$(CC) $(CFLAGS) -D__ASSEMBLER__ -o $@ -c $< 
 
 
 .PHONY: all clean SHOWARGS build_app pack

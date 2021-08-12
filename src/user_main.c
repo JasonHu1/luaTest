@@ -10,6 +10,7 @@
 #include "tuya_iot_sdk_defs.h"
 
 #include "user_iot_intf.h"
+#include "app_debug_printf.h"
 
 STATIC CHAR_T *__parse_config_file(CONST CHAR_T *filename)
 {
@@ -177,6 +178,8 @@ VOID __dp_cmd_query(IN CONST TY_DP_QUERY_S *dp_qry)
     }
 }
 
+extern int app_main_loop(void*args);
+
 int main(int argc, char **argv)
 {
     OPERATE_RET op_ret = OPRT_OK;
@@ -195,7 +198,21 @@ int main(int argc, char **argv)
         .query = __dp_cmd_query
     };
 
-    cfg_str = __parse_config_file("./config.json");
+    char cfgfilePath[512]={0};
+    vDBG_INFO("argc=%d",argc);
+    for(int m=0;m<argc;m++){
+        vDBG_INFO("argv[%d]=%s",m,argv[m]);
+    }
+    if(argc == 1){
+        vDBG_ERR("Please give config.json path!!!");
+        exit(-1);
+    }else{
+        sprintf(cfgfilePath,"%s/%s",argv[1],"config.json");
+    }
+    vDBG_APP(DBG_INFO,"cfgfilePath=%s",cfgfilePath);
+
+    vDBG_INFO("%s",tuya_iot_get_sdk_info());
+    cfg_str = __parse_config_file(cfgfilePath);
     if (cfg_str == NULL) {
         printf("parse json config failed\n");
         return 0;
@@ -220,10 +237,13 @@ int main(int argc, char **argv)
     }
 
     tuya_iot_reg_dp_cb(DP_GW, 0, &dp_cbs);
-
+#if 1
     while (1) {
         sleep(10);
     }
+#else
+    app_main_loop(NULL);
 
+#endif
     return 0;
 }

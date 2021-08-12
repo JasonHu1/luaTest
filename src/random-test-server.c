@@ -47,7 +47,7 @@ typedef struct
 
 #define FD_RANK_SERIAL_START    0
 
-int g_debug_level=LOG_INFO;
+int g_debug_level=DBG_DEBUG;
 int gSerialNm=1;
 int gTcpClientNm=0;
 int gTcpPiClientNm=0;
@@ -250,7 +250,7 @@ int rm_epoll_fd(int epollfd, int fd){
     return 0;
 }
 
-int main(int argc, char*argv[])
+int app_main_loop(void*args)
 {
     int s_tcp = -1,s_tcp_pi;
     modbus_t *ctx[MAX_EVENTS],*ctx_tcp,*ctx_tcp_pi;
@@ -260,13 +260,6 @@ int main(int argc, char*argv[])
     int use_backend;
     uint8_t *query;
     int header_length;
-
-    if (argc > 1) {
-        
-    } else {
-        /* By default */
-        use_backend = TCP;
-    }
 
     socketSeverInit(1502);
 
@@ -309,7 +302,7 @@ int main(int argc, char*argv[])
         perror("epoll_create");
         exit(1);
     }
-    vLOG_APP(LOG_INFO,"11111");
+    vDBG_APP(DBG_INFO,"11111");
     printf("%s<%d>\r",__FUNCTION__,__LINE__);
    
     
@@ -321,10 +314,9 @@ int main(int argc, char*argv[])
 
     for (;;) {
         gTcpClientNm = socketSeverGetNumClients();
-        vLOG_INFO("gTcpClientNm=%d",gTcpClientNm);
+        vDBG_INFO("gTcpClientNm=%d",gTcpClientNm);
         LocalSocketRecord_t *tsock=gpTcpClientList;
         for(i=0;i<gTcpClientNm;i++){
-            vdbg_printf("add tsock=%d",tsock->socketFd);
             add_epoll_fd(epollfd,tsock->socketFd);
             tsock= tsock->next;
         }
@@ -333,7 +325,7 @@ int main(int argc, char*argv[])
             close(epollfd);
             exit(1);
         }
-        vLOG_MODULE1(LOG_INFO,"nfds=%d",nfds);
+        vDBG_MODULE1(DBG_INFO,"nfds=%d",nfds);
         if(nfds){
             vdbg_printf("000");
             for (int n = 0; n < nfds; n++) {
@@ -375,12 +367,9 @@ int main(int argc, char*argv[])
                 vdbg_printf("444");
             }
         }else{//non-blocking poll
-            vdbg_printf("000");
         }
-        vdbg_printf("gTcpClientNm=%d",gTcpClientNm);
         LocalSocketRecord_t *dsock=gpTcpClientList;
         for(i=0;i<gTcpClientNm;i++){
-            vdbg_printf("delete tsock=%d",dsock->socketFd);
             rm_epoll_fd(epollfd,dsock->socketFd);
             dsock= dsock->next;
         }

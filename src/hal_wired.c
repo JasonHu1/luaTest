@@ -15,7 +15,7 @@
 #include "uni_log.h"
 #include "tuya_os_adapt_wired.h"
 
-#define ETH_DEV "enp0s3"
+#define ETH_DEV "ens33"
 
 OPERATE_RET tuya_adapter_wired_get_ip(OUT NW_IP_S *ip)
 {
