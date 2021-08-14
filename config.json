@@ -4,11 +4,21 @@
     "authkey": "dqFRDVgnrOtV2zghkA1JhXur3hWE08zv",
     "storage_path": "./",
     "sw_ver": "1.0.0",
-    "log_level": 4,
+    "log_level": 2,
     "user": [
         {
             "tp": 10,
             "sw_ver": "1.0.0"
+        }
+    ],
+    "uart":[
+        {
+            "proto":"modbus",
+            "dev_nmae":"/dev/ttyUSB1",
+            "baud":115200,
+            "parity":"even",
+            "data_bits":8,
+            "stop_bits":1
         }
     ]
 }

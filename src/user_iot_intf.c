@@ -72,6 +72,8 @@ OPERATE_RET user_svc_init(VOID *cb)
 
     tuya_user_svc_init(cb);
 
+    tuya_iot_gw_dev_hb_init();
+
     tuya_user_dev_svc_init(ty_sdk_cfg);
 
     return ret;

@@ -14,6 +14,7 @@
 #include "tuya_iot_sdk_defs.h"
 
 #include "user_dev_exmaple_intf.h"
+#include "subdev.h"
 
 #define MY_FW_FILE  "/tmp/user_dev_fw.bin"
 #define MY_DEV_TYPE GP_DEV_ATH_1
@@ -71,8 +72,8 @@ STATIC BOOL_T __dev_add_cb(CONST GW_PERMIT_DEV_TP_T tp, CONST BOOL_T permit, CON
 {
     OPERATE_RET op_ret = OPRT_OK;
     UINT_T uddd = 0x00000001;
-    CHAR_T *dev_id = "0006dffffe67e2ac";
-    CHAR_T *pid = "sxdhauza";
+    CHAR_T *dev_id = DEVICE_ID_CONTACT;
+    CHAR_T *pid = PRODUCT_ID_CONTACT;
     CHAR_T *ver = "1.0.0";
 
     PR_DEBUG("dev add callback, tp: %d, permit: %d, timeout: %d", tp, permit, timeout);
@@ -132,6 +133,7 @@ STATIC VOID __dev_bind_cb(CONST CHAR_T *dev_id, CONST OPERATE_RET result)
         return;
     }
 
+    isBind =1;
     op_ret = tuya_iot_fresh_dev_hb(dev_id);
     if (op_ret != OPRT_OK) {
         PR_ERR("tuya_iot_fresh_dev_hb err: %d", op_ret);
@@ -195,7 +197,8 @@ STATIC VOID __dev_hb_cb(CONST CHAR_T *dev_id)
         PR_ERR("invalid param");
         return;
     }
-
+    vDBG_SDKCb(DBG_INFO,"dev_id=%s",dev_id);
+    
     op_ret = tuya_iot_fresh_dev_hb(dev_id);
     if (op_ret != OPRT_OK) {
         PR_ERR("tuya_iot_fresh_dev_hb err: %d", op_ret);

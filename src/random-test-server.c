@@ -28,31 +28,17 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #include "app_defs_types.h"
+#include "subdev.h"
+#include "app_debug_printf.h"
+#include "random-test-server.h"
 
 
-typedef struct
-{
-    void   *next;
-    int socketFd;
-    modbus_t * context;
-    int bRemotectl;	
-	socklen_t clilen;
-	uint8_t IsVerified:1;
-	struct sockaddr_in cli_addr;
-} LocalSocketRecord_t;
 
-#define MAX_EVENTS 10
-#define COUNT_NUM   1
-#define EPOLL_TIMEOUT_MS    50
 
-#define FD_RANK_SERIAL_START    0
 
-int g_debug_level=DBG_DEBUG;
-int gSerialNm=1;
-int gTcpClientNm=0;
-int gTcpPiClientNm=0;
-int gIdx=0;
-LocalSocketRecord_t*gpTcpClientList=NULL;
+
+
+
 
 
 int socketSeverInit( uint32 port )
@@ -250,137 +236,121 @@ int rm_epoll_fd(int epollfd, int fd){
     return 0;
 }
 
-int app_main_loop(void*args)
-{
-    int s_tcp = -1,s_tcp_pi;
-    modbus_t *ctx[MAX_EVENTS],*ctx_tcp,*ctx_tcp_pi;
-    modbus_mapping_t *mb_mapping;
-    int rc;
-    int i,j;
-    int use_backend;
-    uint8_t *query;
-    int header_length;
-
-    socketSeverInit(1502);
-
-    query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
-    ctx[FD_RANK_SERIAL_START] = modbus_new_rtu("/dev/ttyUSB0", 115200, 'N', 8, 1);
-    modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);
-
-    vdbg_printf("11111");
-    
-    mb_mapping = modbus_mapping_new_start_address(
-        UT_BITS_ADDRESS, UT_BITS_NB,
-        UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,
-        UT_REGISTERS_ADDRESS, UT_REGISTERS_NB_MAX,
-        UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
-    if (mb_mapping == NULL) {
-        fprintf(stderr, "Failed to allocate the mapping: %s\n",
-                modbus_strerror(errno));
-        for(i=0;i<COUNT_NUM;i++){
-            modbus_free(ctx[i]);
-        }
-        return -1;
-    }
-
-    /* Examples from PI_MODBUS_300.pdf.
-       Only the read-only input values are assigned. */
-
-    /* Initialize input values that's can be only done server side. */
-    modbus_set_bits_from_bytes(mb_mapping->tab_input_bits, 0, UT_INPUT_BITS_NB,
-                               UT_INPUT_BITS_TAB);
-
-    /* Initialize values of INPUT REGISTERS */
-    for (i=0; i < UT_INPUT_REGISTERS_NB; i++) {
-        mb_mapping->tab_input_registers[i] = UT_INPUT_REGISTERS_TAB[i];
-    }
-
-    struct epoll_event readyEvents[MAX_EVENTS];
-    int nfds, epollfd;
-    // 创建一个epoll实例
-    if ((epollfd = epoll_create(MAX_EVENTS)) == -1) {
-        perror("epoll_create");
-        exit(1);
-    }
-    vDBG_APP(DBG_INFO,"11111");
-    printf("%s<%d>\r",__FUNCTION__,__LINE__);
-   
-    
-    for(i=0;i<gSerialNm;i++){
-        rc = modbus_connect(ctx[FD_RANK_SERIAL_START+i]);
-        modbus_set_debug(ctx[FD_RANK_SERIAL_START+i], TRUE);
-        add_epoll_fd(epollfd,modbus_get_socket(ctx[FD_RANK_SERIAL_START]));
-    }
-
-    for (;;) {
-        gTcpClientNm = socketSeverGetNumClients();
-        vDBG_INFO("gTcpClientNm=%d",gTcpClientNm);
-        LocalSocketRecord_t *tsock=gpTcpClientList;
-        for(i=0;i<gTcpClientNm;i++){
-            add_epoll_fd(epollfd,tsock->socketFd);
-            tsock= tsock->next;
-        }
-        if ((nfds = epoll_wait(epollfd, readyEvents, MAX_EVENTS, EPOLL_TIMEOUT_MS)) == -1) {
-            perror("epoll_wait");
-            close(epollfd);
-            exit(1);
-        }
-        vDBG_MODULE1(DBG_INFO,"nfds=%d",nfds);
-        if(nfds){
-            vdbg_printf("000");
-            for (int n = 0; n < nfds; n++) {
-                vdbg_printf("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
-                for(j=0;j<gSerialNm;j++){
-                    if (readyEvents[n].data.fd == modbus_get_socket(ctx[FD_RANK_SERIAL_START+j])) {//ttyUSB0
-                        rc = modbus_receive(ctx[FD_RANK_SERIAL_START+j], query);
-                        if (rc > 0) {
-                            /* rc is the query size */
-                            modbus_reply(ctx[FD_RANK_SERIAL_START+j], query, rc, mb_mapping);
-                        } else if (rc == -1) {
-                            /* Connection closed by the client or error */
-                           // break;
-                        }
-                    }
-                    continue;
-                }
-                vdbg_printf("222");
-                if (readyEvents[n].data.fd == gpTcpClientList->socketFd) {//new connect client socket fd
-                    vdbg_printf("000");
-                    addTcpClientListRec(modbus_new_tcp(NULL, 1502));
-                }
-                vdbg_printf("333");
-                //recevie data
-                LocalSocketRecord_t *iter=gpTcpClientList;
-                iter = iter->next;
-                do{
-                    if(readyEvents[n].data.fd == iter->socketFd){
-                        rc = modbus_receive(iter->context, query);
-                        if (rc > 0) {
-                            /* rc is the query size */
-                            modbus_reply(iter->context, query, rc, mb_mapping);
-                        } else if (rc == -1) {
-                            /* Connection closed by the client or error */
-                           // break;
-                        }
-                    }
-                }while(iter->next);
-                vdbg_printf("444");
+/**
+ * json config:
+ * {
+ *     "pid": <xxx>,
+ *     "uuid": <...>,
+ *     "authkey_key": <...>,
+ *     "ap_ssid": <... optional>,
+ *     "ap_password": <... optional>,
+ *     "log_level": <level>,
+ *     "sw_ver": <xxx>
+ *     "storage_path": <...>,
+ *     "start_mode": <xxxx>,
+ *     "tuya": {
+ *         "zigbee": {
+ *                       "storage_path": <xxx, string>,
+ *                       "cache_path": <xxx, string>,
+ *                       "dev_name": <xxx, string>,
+ *                       "cts": <xxx, number>,
+ *                       "thread_mode": <xxx, number>,
+ *                       "sw_ver": <xxx, string>
+ *         },
+ *         "bt": {
+ *                   "enable_hb": <xxx, number>,
+ *                   "scan_timeout": <xxx, number>,
+ *                   "mode": <xxx, number>,
+ *                   "sw_ver": <xxx, string>
+ *         }
+ *     },
+ *     "user": {
+ *         [ { "tp": <DEV_ATTACH_MOD_X, number>, "sw_ver": <version, string> }, ... ]
+ *     },
+         "uart":[
+            {
+                "proto":"modbus",
+                "dev_nmae":"/dev/ttyUSB0",
+                "baud":115200,
+                "parity":"E",
+                "data_bits":8,
+                "stop_bits":1
+            },
+            {
+                "proto":"modbus",
+                "dev_nmae":"/dev/ttyUSB1",
+                "baud":115200,
+                "parity":"E",
+                "data_bits":8,
+                "stop_bits":1
             }
-        }else{//non-blocking poll
-        }
-        LocalSocketRecord_t *dsock=gpTcpClientList;
-        for(i=0;i<gTcpClientNm;i++){
-            rm_epoll_fd(epollfd,dsock->socketFd);
-            dsock= dsock->next;
-        }
+        ]
+ * }
+ */
+int user_get_uartConfigure(IN CONST CHAR_T *str_cfg,UARTCFG_T**uartParam)
+{
+    int n,ret;
+    int num ;
+    UARTCFG_T*pUartCfg=NULL;
+    ty_cJSON *pObjCfg=NULL,*pObjUartArray=NULL;
+    pObjCfg = ty_cJSON_Parse(str_cfg);
+    if (pObjCfg == NULL) {
+        PR_ERR("param cfg is invalid");
+        return 0;       
     }
-    printf("Quit the loop: %s\n", modbus_strerror(errno));
-    modbus_mapping_free(mb_mapping);
-    close(s_tcp);
-    close(s_tcp_pi);
-    for(i=0;i<COUNT_NUM;i++){
-        modbus_close(ctx[i]);
-        modbus_free(ctx[i]);
+
+    pObjUartArray = ty_cJSON_GetObjectItem(pObjCfg, "uart");
+    if (pObjUartArray == NULL  || pObjUartArray->type != ty_cJSON_Array) {
+        PR_ERR("param cfg is invalid");
+        num = 0;
+        goto exit;
     }
-    return 0;
+
+    num = ty_cJSON_GetArraySize(pObjUartArray);
+    if(num==0){
+        vDBG_ERR("config.json error");
+        num = 0;
+        goto exit;
+    }
+
+    if((*uartParam = (UARTCFG_T*)malloc(sizeof(UARTCFG_T)*num))==NULL){
+        vDBG_ERR("malloc failed  error");
+        num = 0;
+        goto exit;
+    }
+    pUartCfg = *uartParam;
+    for(int i=0;i<num;i++){
+        ty_cJSON*obj = ty_cJSON_GetArrayItem(pObjUartArray,i);
+        ty_cJSON*objP = ty_cJSON_GetObjectItem(obj,"proto");
+        if(strcmp(objP->valuestring,"modbus")==0){
+            pUartCfg[i].busProto = BUS_PROTOCOL_MODBUS;
+        }else{
+        }
+        
+        ty_cJSON*objParity=ty_cJSON_GetObjectItem(obj, "parity");
+        if(strcmp(objParity->valuestring,"none")==0){
+            pUartCfg[i].parity = 'N';
+        }else if(strcmp(objParity->valuestring,"even")==0){
+            pUartCfg[i].parity = 'E';
+        }else{
+            pUartCfg[i].parity = 'O';
+        }
+        
+        ty_cJSON*objDevnm=ty_cJSON_GetObjectItem(obj, "dev_nmae");
+        strcpy(pUartCfg[i].devName,objDevnm->valuestring) ;
+        
+        ty_cJSON*objBaud=ty_cJSON_GetObjectItem(obj, "baud");
+        pUartCfg[i].baud = objBaud->valueint;
+        
+        ty_cJSON*objDatabit=ty_cJSON_GetObjectItem(obj, "data_bits");
+        pUartCfg[i].dataBit = objDatabit->valueint;
+        
+        ty_cJSON*objStopbit=ty_cJSON_GetObjectItem(obj, "stop_bits");
+        pUartCfg[i].stopBit = objStopbit->valueint;
+    }
+exit:
+    ty_cJSON_Delete(pObjCfg);
+    return num;
 }
+
+

@@ -93,16 +93,18 @@ ifeq ($(APP_PACK),$(wildcard $(APP_PACK)))
 endif
 
 build_app: $(USER_OBJS_OUT)
-	$(CPP) $(USER_OBJS_OUT) $(CFLAGS) $(LINKFLAGS) -o $(OUTPUT_DIR)/$(APP_BIN_NAME)
+	@$(CPP) $(USER_OBJS_OUT) $(CFLAGS) $(LINKFLAGS) -o $(OUTPUT_DIR)/$(APP_BIN_NAME)
 	@echo "Build APP Finish"
 
 $(OUTPUT_DIR_OBJS)/%.c.o: %.c
 	@mkdir -p $(dir $@);
-	$(CC) $(CFLAGS) -o $@ -c $< 
-
+	@$(CC) $(CFLAGS) -o $@ -c $< 
+	@echo "目标文件..$@"
+	@echo "依赖文件..$^"
+	
 $(OUTPUT_DIR_OBJS)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@);
-	$(CPP) $(CFLAGS) $(CPPFLAGS) -o $@ -c $< 
+	@$(CPP) $(CFLAGS) $(CPPFLAGS) -o $@ -c $< 
 
 $(OUTPUT_DIR_OBJS)/%.s.o: %.s
 	@mkdir -p $(dir $@);

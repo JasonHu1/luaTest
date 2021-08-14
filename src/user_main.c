@@ -8,9 +8,88 @@
 #include "tuya_iot_com_api.h"
 #include "tuya_iot_sdk_api.h"
 #include "tuya_iot_sdk_defs.h"
+#include <errno.h>
+#include "unit-test.h"
+#include "modbus.h"
+#include <sys/epoll.h>
+#include "app_debug_printf.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/signal.h>
+#include <sys/ioctl.h>
+#include <sys/epoll.h>
+#include <errno.h>
+#include "app_defs_types.h"
+#include "subdev.h"
+#include "app_debug_printf.h"
+#include "random-test-server.h"
 
 #include "user_iot_intf.h"
 #include "app_debug_printf.h"
+#include "subdev.h"
+#include "random-test-server.h"
+
+#define COUNT_NUM   1
+#define EPOLL_TIMEOUT_MS    50
+
+
+
+int g_debug_level=DBG_DEBUG;
+unsigned int g_debug_module= MODULE_DBG_ALL;
+
+int gSerialNm=1;
+int gTcpClientNm=0;
+int gTcpPiClientNm=0;
+int gIdx=0;
+LocalSocketRecord_t* gpTcpClientList = NULL;
+modbus_t *ctx[MAX_EVENTS];
+int isfirst=0;
+
+
+const uint16_t UT_BITS_ADDRESS = 0x130;
+const uint16_t UT_BITS_NB = 0x25;
+const uint8_t UT_BITS_TAB[] = { 0xCD, 0x6B, 0xB2, 0x0E, 0x1B };
+
+const uint16_t UT_INPUT_BITS_ADDRESS = 0x1C4;
+const uint16_t UT_INPUT_BITS_NB = 0x16;
+const uint8_t UT_INPUT_BITS_TAB[] = { 0xAC, 0xDB, 0x35 };
+
+const uint16_t UT_REGISTERS_ADDRESS = 0x160;
+const uint16_t UT_REGISTERS_NB = 0x3;
+const uint16_t UT_REGISTERS_NB_MAX = 0x20;
+const uint16_t UT_REGISTERS_TAB[] = { 0x022B, 0x0001, 0x0064 };
+
+/* Raise a manual exception when this address is used for the first byte */
+const uint16_t UT_REGISTERS_ADDRESS_SPECIAL = 0x170;
+/* The response of the server will contains an invalid TID or slave */
+const uint16_t UT_REGISTERS_ADDRESS_INVALID_TID_OR_SLAVE = 0x171;
+/* The server will wait for 1 second before replying to test timeout */
+const uint16_t UT_REGISTERS_ADDRESS_SLEEP_500_MS = 0x172;
+/* The server will wait for 5 ms before sending each byte */
+const uint16_t UT_REGISTERS_ADDRESS_BYTE_SLEEP_5_MS = 0x173;
+
+/* If the following value is used, a bad response is sent.
+   It's better to test with a lower value than
+   UT_REGISTERS_NB_POINTS to try to raise a segfault. */
+const uint16_t UT_REGISTERS_NB_SPECIAL = 0x2;
+
+const uint16_t UT_INPUT_REGISTERS_ADDRESS = 0x108;
+const uint16_t UT_INPUT_REGISTERS_NB = 0x1;
+const uint16_t UT_INPUT_REGISTERS_TAB[] = { 0x000A };
+
+const float UT_REAL = 123456.00;
+
+const uint32_t UT_IREAL_ABCD = 0x0020F147;
+const uint32_t UT_IREAL_DCBA = 0x47F12000;
+const uint32_t UT_IREAL_BADC = 0x200047F1;
+const uint32_t UT_IREAL_CDAB = 0xF1470020;
 
 STATIC CHAR_T *__parse_config_file(CONST CHAR_T *filename)
 {
@@ -183,6 +262,7 @@ extern int app_main_loop(void*args);
 int main(int argc, char **argv)
 {
     OPERATE_RET op_ret = OPRT_OK;
+    pthread_t t;
     CHAR_T *cfg_str = NULL;
     /*注册网关管理函数*/
     TY_GW_INFRA_CBS_S gw_cbs = {
@@ -210,7 +290,16 @@ int main(int argc, char **argv)
         sprintf(cfgfilePath,"%s/%s",argv[1],"config.json");
     }
     vDBG_APP(DBG_INFO,"cfgfilePath=%s",cfgfilePath);
-
+    vDBG_APP(DBG_INFO,"app module debug level is info");
+    vDBG_INFO("g_debug_module & MODULE_DBG_APP00 = %d",g_debug_module & MODULE_DBG_APP00);
+    
+    if(g_debug_module & MODULE_DBG_APP00){
+        vDBG_INFO("open app module debug");
+    }
+    if(!(g_debug_module & MODULE_DBG_APP00)){
+        vDBG_INFO("close app module debug");
+    }
+    
     vDBG_INFO("%s",tuya_iot_get_sdk_info());
     cfg_str = __parse_config_file(cfgfilePath);
     if (cfg_str == NULL) {
@@ -236,13 +325,165 @@ int main(int argc, char **argv)
         return op_ret;
     }
 
-    tuya_iot_reg_dp_cb(DP_GW, 0, &dp_cbs);
-#if 1
-    while (1) {
-        sleep(10);
+    if(pthread_create(&t,NULL,app_main_loop,NULL)!=0){
+        vDBG_ERR("pthread create failed");
+        exit(-1);
     }
+    
+    tuya_iot_reg_dp_cb(DP_GW, 0, &dp_cbs);
+#if 0
 #else
-    app_main_loop(NULL);
+{
+    int s_tcp = -1,s_tcp_pi;
+    modbus_t *ctx_tcp,*ctx_tcp_pi;
+    modbus_mapping_t *mb_mapping;
+    int rc;
+    int i,j;
+    int use_backend;
+    uint8_t *query;
+    int header_length;
+
+    socketSeverInit(1502);
+
+    query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
+
+    /**********uart setting***********/
+    UARTCFG_T *uartCfg=NULL;
+    gSerialNm = user_get_uartConfigure(cfg_str,&uartCfg);
+    if((0==gSerialNm) || (uartCfg == NULL)){
+        vDBG_ERR("uart config information error");
+        exit(-1);
+    }
+    for(i=0;i<gSerialNm;i++){
+        vDBG_INFO("uartCfg[0].parity =%d,%c",uartCfg[i].parity,uartCfg[i].parity);
+        if(BUS_PROTOCOL_MODBUS==uartCfg[i].busProto){//modbus
+            ctx[FD_RANK_SERIAL_START+i] = modbus_new_rtu(uartCfg[i].devName,uartCfg[i].baud, uartCfg[i].parity, uartCfg[i].dataBit, uartCfg[i].stopBit);
+            if(rc = modbus_connect(ctx[FD_RANK_SERIAL_START+i])==-1){
+                vDBG_ERR("ctx[%d] connect failed !!!fd=%d",FD_RANK_SERIAL_START+i,modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
+                exit(-1);
+            }
+            vDBG_INFO("connect fd=%d success",modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
+        }else if(BUS_PROTOCOL_KNX==uartCfg[i].busProto){
+        }else{
+        }
+    }
+    
+    mb_mapping = modbus_mapping_new_start_address(
+        UT_BITS_ADDRESS, UT_BITS_NB,
+        UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,
+        UT_REGISTERS_ADDRESS, UT_REGISTERS_NB_MAX,
+        UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
+    if (mb_mapping == NULL) {
+        fprintf(stderr, "Failed to allocate the mapping: %s\n",
+                modbus_strerror(errno));
+        for(i=0;i<COUNT_NUM;i++){
+            modbus_free(ctx[i]);
+        }
+        return -1;
+    }
+
+    /* Examples from PI_MODBUS_300.pdf.
+       Only the read-only input values are assigned. */
+
+    /* Initialize input values that's can be only done server side. */
+    modbus_set_bits_from_bytes(mb_mapping->tab_input_bits, 0, UT_INPUT_BITS_NB,
+                               UT_INPUT_BITS_TAB);
+
+    /* Initialize values of INPUT REGISTERS */
+    for (i=0; i < UT_INPUT_REGISTERS_NB; i++) {
+        mb_mapping->tab_input_registers[i] = UT_INPUT_REGISTERS_TAB[i];
+    }
+
+    struct epoll_event readyEvents[MAX_EVENTS];
+    int nfds, epollfd;
+    // 创建一个epoll实例
+    if ((epollfd = epoll_create(MAX_EVENTS)) == -1) {
+        perror("epoll_create");
+        exit(1);
+    }
+   
+    
+    for(i=0;i<gSerialNm;i++){
+        modbus_set_debug(ctx[FD_RANK_SERIAL_START+i], TRUE);
+        isfirst=1;
+//        add_epoll_fd(epollfd,modbus_get_socket(ctx[FD_RANK_SERIAL_START]));
+    }
+
+    for (;;) {
+        gTcpClientNm = socketSeverGetNumClients();
+        vDBG_INFO("gTcpClientNm=%d",gTcpClientNm);
+        LocalSocketRecord_t *tsock=gpTcpClientList;
+        for(i=0;i<gTcpClientNm;i++){
+            add_epoll_fd(epollfd,tsock->socketFd);
+            tsock= tsock->next;
+        }
+        if ((nfds = epoll_wait(epollfd, readyEvents, MAX_EVENTS, EPOLL_TIMEOUT_MS)) == -1) {
+            perror("epoll_wait");
+            close(epollfd);
+            exit(1);
+        }
+        vDBG_MODULE1(DBG_MSGDUMP,"nfds=%d",nfds);
+        if(nfds){
+            for (int n = 0; n < nfds; n++) {
+                vDBG_INFO("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
+                for(j=0;j<gSerialNm;j++){
+                    if (readyEvents[n].data.fd == modbus_get_socket(ctx[FD_RANK_SERIAL_START+j])) {//ttyUSB0
+                        rc = modbus_receive(ctx[FD_RANK_SERIAL_START+j], query);
+                        if (rc > 0) {
+                            /* rc is the query size */
+                            modbus_reply(ctx[FD_RANK_SERIAL_START+j], query, rc, mb_mapping);
+                        } else if (rc == -1) {
+                            /* Connection closed by the client or error */
+                           vDBG_ERR("modbus_receive failed !!!");
+                        }
+                    }
+                    continue;
+                }
+                vDBG_INFO("222");
+                if (readyEvents[n].data.fd == gpTcpClientList->socketFd) {//new connect client socket fd
+                    vDBG_INFO("000");
+                    addTcpClientListRec(modbus_new_tcp(NULL, 1502));
+                }
+                vDBG_INFO("333");
+                //recevie data
+                if(NULL==gpTcpClientList){
+                    continue;
+                }
+                LocalSocketRecord_t *iter=gpTcpClientList;
+                iter = iter->next;
+                do{
+                    if(readyEvents[n].data.fd == iter->socketFd){
+                        rc = modbus_receive(iter->context, query);
+                        if (rc > 0) {
+                            /* rc is the query size */
+                            modbus_reply(iter->context, query, rc, mb_mapping);
+                        } else if (rc == -1) {
+                            /* Connection closed by the client or error */
+                           // break;
+                        }
+                    }
+                }while(iter->next);
+                vDBG_INFO("444");
+            }
+        }else{//non-blocking poll
+            sleep(1);
+        }
+        LocalSocketRecord_t *dsock=gpTcpClientList;
+        for(i=0;i<gTcpClientNm;i++){
+            rm_epoll_fd(epollfd,dsock->socketFd);
+            dsock= dsock->next;
+        }
+    }
+    printf("Quit the loop: %s\n", modbus_strerror(errno));
+    modbus_mapping_free(mb_mapping);
+    close(s_tcp);
+    close(s_tcp_pi);
+    for(i=0;i<COUNT_NUM;i++){
+        modbus_close(ctx[i]);
+        modbus_free(ctx[i]);
+    }
+    return 0;
+}
 
 #endif
     return 0;
