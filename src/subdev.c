@@ -34,6 +34,23 @@ int report_status(char status)
     
 }
 
+int report_batteryVal(INT_T btVal)
+{
+    OPERATE_RET ret= OPRT_OK;
+    TY_OBJ_DP_S  dp_data[3];
+
+    //battery_percentage
+    dp_data[1].dpid = 2;
+    dp_data[1].type = PROP_VALUE;
+    dp_data[1].value.dp_value = btVal;
+
+    if(ret = dev_report_dp_json_async(DEVICE_ID_CONTACT, &dp_data, 3)!=OPRT_OK){
+        vDBG_ERR("ret=%d",ret);
+    }
+    vDBG_INFO("report ok");
+    
+}
+
 
 void readSerial(void){
 
@@ -53,10 +70,6 @@ int app_main_loop(void*args){
     for(;;){
         sleep(1);
         #if 1
-        if(isfirst!=1){
-            vDBG_INFO("uart connect NOT finish!!!");
-            continue;
-        }
         if(!isBind){
             vDBG_INFO("subdev is Not bind success!!!");
             continue;
@@ -75,13 +88,11 @@ int app_main_loop(void*args){
         }else{
             vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
         }
-
-        if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 20,buffer)!= -1){
-            vDBG_INFO("modbus_read_bits ok2");
-            for(int i=0;i<20;i++){
-                printf("%02x ",buffer[i]);
-            }
-            printf("\r\n");
+        //03 (0x03) Read Holding Registers
+        uint16 batteryVol;
+        if(ret = modbus_read_registers(ctx[FD_RANK_SERIAL_START],0, 1,&batteryVol)!= -1){
+            vDBG_INFO("modbus_read_registers batteryVol=%d",batteryVol);
+            report_batteryVal(batteryVol);
         }else{
             vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
         }

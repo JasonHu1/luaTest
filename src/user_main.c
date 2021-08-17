@@ -35,6 +35,7 @@
 #include "app_debug_printf.h"
 #include "subdev.h"
 #include "random-test-server.h"
+#include "time_scale.h"
 
 #define COUNT_NUM   1
 #define EPOLL_TIMEOUT_MS    50
@@ -324,167 +325,168 @@ int main(int argc, char **argv)
         PR_ERR("user_svc_start err: %d", op_ret);
         return op_ret;
     }
-
-    if(pthread_create(&t,NULL,app_main_loop,NULL)!=0){
-        vDBG_ERR("pthread create failed");
-        exit(-1);
-    }
     
     tuya_iot_reg_dp_cb(DP_GW, 0, &dp_cbs);
-#if 0
-#else
-{
-    int s_tcp = -1,s_tcp_pi;
-    modbus_t *ctx_tcp,*ctx_tcp_pi;
-    modbus_mapping_t *mb_mapping;
-    int rc;
-    int i,j;
-    int use_backend;
-    uint8_t *query;
-    int header_length;
 
-    socketSeverInit(1502);
+    {
+        int s_tcp = -1,s_tcp_pi;
+        modbus_t *ctx_tcp,*ctx_tcp_pi;
+        modbus_mapping_t *mb_mapping;
+        int rc;
+        int i,j;
+        int use_backend;
+        uint8_t *query;
+        int header_length;
 
-    query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
+        socketSeverInit(1502);
 
-    /**********uart setting***********/
-    UARTCFG_T *uartCfg=NULL;
-    gSerialNm = user_get_uartConfigure(cfg_str,&uartCfg);
-    if((0==gSerialNm) || (uartCfg == NULL)){
-        vDBG_ERR("uart config information error");
-        exit(-1);
-    }
-    for(i=0;i<gSerialNm;i++){
-        vDBG_INFO("uartCfg[0].parity =%d,%c",uartCfg[i].parity,uartCfg[i].parity);
-        if(BUS_PROTOCOL_MODBUS==uartCfg[i].busProto){//modbus
-            ctx[FD_RANK_SERIAL_START+i] = modbus_new_rtu(uartCfg[i].devName,uartCfg[i].baud, uartCfg[i].parity, uartCfg[i].dataBit, uartCfg[i].stopBit);
-            if(rc = modbus_connect(ctx[FD_RANK_SERIAL_START+i])==-1){
-                vDBG_ERR("ctx[%d] connect failed !!!fd=%d",FD_RANK_SERIAL_START+i,modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
-                exit(-1);
+        query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
+
+        /**********uart setting***********/
+        UARTCFG_T *uartCfg=NULL;
+        gSerialNm = user_get_uartConfigure(cfg_str,&uartCfg);
+        if((0==gSerialNm) || (uartCfg == NULL)){
+            vDBG_ERR("uart config information error");
+            exit(-1);
+        }
+        for(i=0;i<gSerialNm;i++){
+            vDBG_INFO("uartCfg[0].parity =%d,%c",uartCfg[i].parity,uartCfg[i].parity);
+            if(BUS_PROTOCOL_MODBUS==uartCfg[i].busProto){//modbus
+                ctx[FD_RANK_SERIAL_START+i] = modbus_new_rtu(uartCfg[i].devName,uartCfg[i].baud, uartCfg[i].parity, uartCfg[i].dataBit, uartCfg[i].stopBit);
+                if(rc = modbus_connect(ctx[FD_RANK_SERIAL_START+i])==-1){
+                    vDBG_ERR("ctx[%d] connect failed !!!fd=%d",FD_RANK_SERIAL_START+i,modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
+                    exit(-1);
+                }
+                modbus_set_debug(ctx[FD_RANK_SERIAL_START+i], TRUE);
+                vDBG_INFO("connect fd=%d success",modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
+                if(pthread_create(&t,NULL,app_main_loop,NULL)!=0){
+                    vDBG_ERR("pthread create failed");
+                    exit(-1);
+                }
+            }else if(BUS_PROTOCOL_KNX==uartCfg[i].busProto){
+            }else{
             }
-            vDBG_INFO("connect fd=%d success",modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
-        }else if(BUS_PROTOCOL_KNX==uartCfg[i].busProto){
-        }else{
         }
-    }
-    
-    mb_mapping = modbus_mapping_new_start_address(
-        UT_BITS_ADDRESS, UT_BITS_NB,
-        UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,
-        UT_REGISTERS_ADDRESS, UT_REGISTERS_NB_MAX,
-        UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
-    if (mb_mapping == NULL) {
-        fprintf(stderr, "Failed to allocate the mapping: %s\n",
-                modbus_strerror(errno));
-        for(i=0;i<COUNT_NUM;i++){
-            modbus_free(ctx[i]);
+        
+        mb_mapping = modbus_mapping_new_start_address(
+            UT_BITS_ADDRESS, UT_BITS_NB,
+            UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,
+            UT_REGISTERS_ADDRESS, UT_REGISTERS_NB_MAX,
+            UT_INPUT_REGISTERS_ADDRESS, UT_INPUT_REGISTERS_NB);
+        if (mb_mapping == NULL) {
+            fprintf(stderr, "Failed to allocate the mapping: %s\n",
+                    modbus_strerror(errno));
+            for(i=0;i<COUNT_NUM;i++){
+                modbus_free(ctx[i]);
+            }
+            return -1;
         }
-        return -1;
-    }
 
-    /* Examples from PI_MODBUS_300.pdf.
-       Only the read-only input values are assigned. */
+        /* Examples from PI_MODBUS_300.pdf.
+           Only the read-only input values are assigned. */
 
-    /* Initialize input values that's can be only done server side. */
-    modbus_set_bits_from_bytes(mb_mapping->tab_input_bits, 0, UT_INPUT_BITS_NB,
-                               UT_INPUT_BITS_TAB);
+        /* Initialize input values that's can be only done server side. */
+        modbus_set_bits_from_bytes(mb_mapping->tab_input_bits, 0, UT_INPUT_BITS_NB,
+                                   UT_INPUT_BITS_TAB);
 
-    /* Initialize values of INPUT REGISTERS */
-    for (i=0; i < UT_INPUT_REGISTERS_NB; i++) {
-        mb_mapping->tab_input_registers[i] = UT_INPUT_REGISTERS_TAB[i];
-    }
-
-    struct epoll_event readyEvents[MAX_EVENTS];
-    int nfds, epollfd;
-    // 创建一个epoll实例
-    if ((epollfd = epoll_create(MAX_EVENTS)) == -1) {
-        perror("epoll_create");
-        exit(1);
-    }
-   
-    
-    for(i=0;i<gSerialNm;i++){
-        modbus_set_debug(ctx[FD_RANK_SERIAL_START+i], TRUE);
-        isfirst=1;
-//        add_epoll_fd(epollfd,modbus_get_socket(ctx[FD_RANK_SERIAL_START]));
-    }
-
-    for (;;) {
-        gTcpClientNm = socketSeverGetNumClients();
-        vDBG_INFO("gTcpClientNm=%d",gTcpClientNm);
-        LocalSocketRecord_t *tsock=gpTcpClientList;
-        for(i=0;i<gTcpClientNm;i++){
-            add_epoll_fd(epollfd,tsock->socketFd);
-            tsock= tsock->next;
+        /* Initialize values of INPUT REGISTERS */
+        for (i=0; i < UT_INPUT_REGISTERS_NB; i++) {
+            mb_mapping->tab_input_registers[i] = UT_INPUT_REGISTERS_TAB[i];
         }
-        if ((nfds = epoll_wait(epollfd, readyEvents, MAX_EVENTS, EPOLL_TIMEOUT_MS)) == -1) {
-            perror("epoll_wait");
-            close(epollfd);
+
+        struct epoll_event readyEvents[MAX_EVENTS];
+        int nfds, epollfd;
+        // 创建一个epoll实例
+        if ((epollfd = epoll_create(MAX_EVENTS)) == -1) {
+            perror("epoll_create");
             exit(1);
         }
-        vDBG_MODULE1(DBG_MSGDUMP,"nfds=%d",nfds);
-        if(nfds){
-            for (int n = 0; n < nfds; n++) {
-                vDBG_INFO("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
-                for(j=0;j<gSerialNm;j++){
-                    if (readyEvents[n].data.fd == modbus_get_socket(ctx[FD_RANK_SERIAL_START+j])) {//ttyUSB0
-                        rc = modbus_receive(ctx[FD_RANK_SERIAL_START+j], query);
-                        if (rc > 0) {
-                            /* rc is the query size */
-                            modbus_reply(ctx[FD_RANK_SERIAL_START+j], query, rc, mb_mapping);
-                        } else if (rc == -1) {
-                            /* Connection closed by the client or error */
-                           vDBG_ERR("modbus_receive failed !!!");
-                        }
-                    }
-                    continue;
-                }
-                vDBG_INFO("222");
-                if (readyEvents[n].data.fd == gpTcpClientList->socketFd) {//new connect client socket fd
-                    vDBG_INFO("000");
-                    addTcpClientListRec(modbus_new_tcp(NULL, 1502));
-                }
-                vDBG_INFO("333");
-                //recevie data
-                if(NULL==gpTcpClientList){
-                    continue;
-                }
-                LocalSocketRecord_t *iter=gpTcpClientList;
-                iter = iter->next;
-                do{
-                    if(readyEvents[n].data.fd == iter->socketFd){
-                        rc = modbus_receive(iter->context, query);
-                        if (rc > 0) {
-                            /* rc is the query size */
-                            modbus_reply(iter->context, query, rc, mb_mapping);
-                        } else if (rc == -1) {
-                            /* Connection closed by the client or error */
-                           // break;
-                        }
-                    }
-                }while(iter->next);
-                vDBG_INFO("444");
-            }
-        }else{//non-blocking poll
-            sleep(1);
+       
+        
+        for(i=0;i<gSerialNm;i++){
+    //        add_epoll_fd(epollfd,modbus_get_socket(ctx[FD_RANK_SERIAL_START]));
         }
-        LocalSocketRecord_t *dsock=gpTcpClientList;
-        for(i=0;i<gTcpClientNm;i++){
-            rm_epoll_fd(epollfd,dsock->socketFd);
-            dsock= dsock->next;
+        
+        if(pthread_create(&t,NULL,timescale_task_loop,NULL)!=0){
+            vDBG_ERR("timescale_task_loop pthread create failed");
+            exit(-1);
         }
-    }
-    printf("Quit the loop: %s\n", modbus_strerror(errno));
-    modbus_mapping_free(mb_mapping);
-    close(s_tcp);
-    close(s_tcp_pi);
-    for(i=0;i<COUNT_NUM;i++){
-        modbus_close(ctx[i]);
-        modbus_free(ctx[i]);
-    }
-    return 0;
-}
 
-#endif
+        for (;;) {
+            gTcpClientNm = socketSeverGetNumClients();
+            vDBG_INFO("gTcpClientNm=%d",gTcpClientNm);
+            LocalSocketRecord_t *tsock=gpTcpClientList;
+            for(i=0;i<gTcpClientNm;i++){
+                add_epoll_fd(epollfd,tsock->socketFd);
+                tsock= tsock->next;
+            }
+            if ((nfds = epoll_wait(epollfd, readyEvents, MAX_EVENTS, EPOLL_TIMEOUT_MS)) == -1) {
+                perror("epoll_wait");
+                close(epollfd);
+                exit(1);
+            }
+            vDBG_MODULE1(DBG_MSGDUMP,"nfds=%d",nfds);
+            if(nfds){
+                for (int n = 0; n < nfds; n++) {
+                    vDBG_INFO("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
+                    for(j=0;j<gSerialNm;j++){
+                        if (readyEvents[n].data.fd == modbus_get_socket(ctx[FD_RANK_SERIAL_START+j])) {//ttyUSB0
+                            rc = modbus_receive(ctx[FD_RANK_SERIAL_START+j], query);
+                            if (rc > 0) {
+                                /* rc is the query size */
+                                modbus_reply(ctx[FD_RANK_SERIAL_START+j], query, rc, mb_mapping);
+                            } else if (rc == -1) {
+                                /* Connection closed by the client or error */
+                               vDBG_ERR("modbus_receive failed !!!");
+                            }
+                        }
+                        continue;
+                    }
+                    vDBG_INFO("222");
+                    if (readyEvents[n].data.fd == gpTcpClientList->socketFd) {//new connect client socket fd
+                        vDBG_INFO("000");
+                        addTcpClientListRec(modbus_new_tcp(NULL, 1502));
+                    }
+                    vDBG_INFO("333");
+                    //recevie data
+                    if(NULL==gpTcpClientList){
+                        continue;
+                    }
+                    LocalSocketRecord_t *iter=gpTcpClientList;
+                    iter = iter->next;
+                    do{
+                        if(readyEvents[n].data.fd == iter->socketFd){
+                            rc = modbus_receive(iter->context, query);
+                            if (rc > 0) {
+                                /* rc is the query size */
+                                modbus_reply(iter->context, query, rc, mb_mapping);
+                            } else if (rc == -1) {
+                                /* Connection closed by the client or error */
+                               // break;
+                            }
+                        }
+                    }while(iter->next);
+                    vDBG_INFO("444");
+                }
+            }else{//non-blocking poll
+                sleep(1);
+            }
+            LocalSocketRecord_t *dsock=gpTcpClientList;
+            for(i=0;i<gTcpClientNm;i++){
+                rm_epoll_fd(epollfd,dsock->socketFd);
+                dsock= dsock->next;
+            }
+        }
+        printf("Quit the loop: %s\n", modbus_strerror(errno));
+        modbus_mapping_free(mb_mapping);
+        close(s_tcp);
+        close(s_tcp_pi);
+        for(i=0;i<COUNT_NUM;i++){
+            modbus_close(ctx[i]);
+            modbus_free(ctx[i]);
+        }
+        return 0;
+    }
+
     return 0;
 }

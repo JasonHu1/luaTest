@@ -11,7 +11,6 @@
 
 extern int isBind;
 extern modbus_t *ctx[MAX_EVENTS];
-int isfirst;
 
 int report_status(char status);
 int report_loop(void*args);
