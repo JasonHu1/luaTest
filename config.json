@@ -14,7 +14,7 @@
     "uart":[
         {
             "proto":"modbus",
-            "dev_nmae":"/dev/ttyUSB1",
+            "dev_nmae":"/dev/ttyUSB0",
             "baud":115200,
             "parity":"even",
             "data_bits":8,

@@ -38,12 +38,10 @@ LINKFLAGS = \
 
 LINKFLAGS += $(USER_LINK_FLAGS)
 LINKFLAGS += `pkg-config --libs libmodbus`
-LINKFLAGS += `pkg-config --libs liblua`
 
 CCFLAGS = \
-	-g -fPIC -Werror=unused-function -MMD
+	-g -fPIC -MMD
 CCFLAGS += `pkg-config --cflags libmodbus`
-CCFLAGS += `pkg-config --cflags liblua`
 
 CPPFLAGS += -std=c++11
 

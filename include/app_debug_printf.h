@@ -2,6 +2,9 @@
 #define __DEBUG_H_
 #include "string.h"
 #include "uni_log.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int g_debug_level;
 extern unsigned int g_debug_module;
@@ -53,10 +56,10 @@ enum{
 //<>module name must three char
 
 //general simple
-#define vDBG_DEBUG(_fmt_,...)    do{if(g_debug_level>=DBG_DEBUG){  printf("< DBG >[%s:%d]%s() "_fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
-#define vDBG_INFO(_fmt_,...)     do{if(g_debug_level>=DBG_INFO){   printf("< INF >[%s:%d]%s() "_fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
-#define vDBG_ERR(_fmt_,...)      do{if(g_debug_level>=DBG_ERROR){ printf( "< ERR >[%s:%d]%s() "_fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
-#define vDBG_WARN(_fmt_,...)     do{if(g_debug_level>=DBG_WARNING){printf("< WAR >[%s:%d]%s() "_fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
+#define vDBG_DEBUG(_fmt_,...)    do{if(g_debug_level>=DBG_DEBUG){  printf("< DBG >[%s:%d]%s() " _fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
+#define vDBG_INFO(_fmt_,...)     do{if(g_debug_level>=DBG_INFO){   printf("< INF >[%s:%d]%s() " _fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
+#define vDBG_ERR(_fmt_,...)      do{if(g_debug_level>=DBG_ERROR){  printf("< ERR >[%s:%d]%s() " _fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
+#define vDBG_WARN(_fmt_,...)     do{if(g_debug_level>=DBG_WARNING){printf("< WAR >[%s:%d]%s() " _fmt_,BASENAME(__FILE__),__LINE__,__FUNCTION__,##__VA_ARGS__);printf("\n\r");}}while(0)
 
 //module detailedly
 #define vDBG_APP(level,_fmt_,...)\
@@ -80,5 +83,8 @@ enum{
 			printf("< SDK >[%d]%s() "_fmt_"\n\r",__LINE__,__FUNCTION__,##__VA_ARGS__);}}while(0)
         
 
+#ifdef __cplusplus
+        }
+#endif
 
 #endif//__DEBUG_H_

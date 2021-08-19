@@ -74,6 +74,8 @@ int app_main_loop(void*args){
             vDBG_INFO("subdev is Not bind success!!!");
             continue;
         }
+
+        message_encode();
         //01 (0x01) Read Coils
         
         modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);

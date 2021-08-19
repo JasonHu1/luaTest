@@ -51,21 +51,23 @@ int message_encode(void){
             std::cout<<"dp_data.m_public "<<dp_data.m_public<<std::endl;
             std::cout<<"dp_data.get_cmd_tp "<<dp_data.get_cmd_tp()<<std::endl;
             std::cout<<"dp_data.get_dps_cnt "<<dp_data.get_dps_cnt()<<std::endl;
+
             TuyaProtoElement el = dp_data.getData();
             std::cout<<"el.get_dpid "<<el.get_dpid()<<std::endl;
 
-            engine.execute(pbuf, "encode", &dp_data,&tt);
+            engine.execute(pbuf, "encode_test", &dp_data,&tt);
 
-            std::cout<<"------After lua parse--------"<<std::endl;
+            std::cout<<"\r\n------After lua parse--------"<<std::endl;
             std::cout<<"dp_data.m_public "<<dp_data.m_public<<std::endl;
             std::cout<<"dp_data.get_cmd_tp "<<dp_data.get_cmd_tp()<<std::endl;
             std::cout<<"dp_data.get_dps_cnt "<<dp_data.get_dps_cnt()<<std::endl;
-            for(auto iter=dp_data.m_dpsList.begin();iter!=dp_data.m_dpsList.end();iter++){
-                
-                std::cout<<" el.get_dpid "<<iter->get_dpid()<<std::endl;
-            }
+            
+            printf("tt.retVal=%d\r\n",tt.retVal);
+            tt.printpayload();\
+            printf("tt.name=%s\r\n",tt.name.c_str());
         }
     }else{
+        vDBG_ERR("lua script file open fail");
         return -1;
     }
     

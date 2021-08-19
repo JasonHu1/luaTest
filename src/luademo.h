@@ -1,6 +1,6 @@
 #ifndef __LUA_DEMO_H_
 #define __LUA_DEMO_H_
-
+#include "app_debug_printf.h"
 
 #ifdef __cplusplus
 extern "C" {
