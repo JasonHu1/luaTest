@@ -35,6 +35,7 @@
 
 
 
+SLAVEINFOLIST_T *gSlaveDeviceInfoList=NULL;
 
 
 
@@ -338,6 +339,9 @@ int user_get_uartConfigure(IN CONST CHAR_T *str_cfg,UARTCFG_T**uartParam)
         
         ty_cJSON*objDevnm=ty_cJSON_GetObjectItem(obj, "dev_nmae");
         strcpy(pUartCfg[i].devName,objDevnm->valuestring) ;
+
+        ty_cJSON*objChannel=ty_cJSON_GetObjectItem(obj, "channel");
+        pUartCfg[i].channel = objChannel->valueint;
         
         ty_cJSON*objBaud=ty_cJSON_GetObjectItem(obj, "baud");
         pUartCfg[i].baud = objBaud->valueint;
@@ -351,6 +355,85 @@ int user_get_uartConfigure(IN CONST CHAR_T *str_cfg,UARTCFG_T**uartParam)
 exit:
     ty_cJSON_Delete(pObjCfg);
     return num;
+}
+
+int user_get_slaveList(IN CONST CHAR_T *str_cfg)
+{
+    int n,ret;
+    int num ;
+    SLAVEINFOLIST_T *node=NULL;
+    ty_cJSON *pObjCfg=NULL,*pObjSlaveArray=NULL;
+    pObjCfg = ty_cJSON_Parse(str_cfg);
+    if (pObjCfg == NULL) {
+        PR_ERR("param cfg is invalid");
+        return 0;       
+    }
+
+    pObjSlaveArray = ty_cJSON_GetObjectItem(pObjCfg, "slaves");
+    if (pObjSlaveArray == NULL  || pObjSlaveArray->type != ty_cJSON_Array) {
+        PR_ERR("param cfg is invalid");
+        ret = -1;
+        goto exit;
+    }
+
+    num = ty_cJSON_GetArraySize(pObjSlaveArray);
+    if(num==0){
+        vDBG_ERR("config.json error");
+        ret = -1;
+        goto exit;
+    }
+    for(n=0;n<num;n++){
+        if((node = (SLAVEINFOLIST_T*)malloc(sizeof(SLAVEINFOLIST_T)))==NULL){
+            vDBG_ERR("malloc failed  error");
+            ret = -1;
+            goto exit;
+        }
+        ty_cJSON*obj = ty_cJSON_GetArrayItem(pObjSlaveArray,n);
+        
+        ty_cJSON*objPid = ty_cJSON_GetObjectItem(obj,"pid");
+        if(objPid){
+            strcpy(node->pid,objPid->valuestring) ;
+        }
+
+        ty_cJSON*objDevnm=ty_cJSON_GetObjectItem(obj, "nick");
+        if(objDevnm){
+            strcpy(node->devName,objDevnm->valuestring) ;
+        }
+    
+        ty_cJSON*objChannel=ty_cJSON_GetObjectItem(obj, "channel");
+        if(objChannel){
+            node->channel = objChannel->valueint;
+        }else{
+            vDBG_ERR("must set device channel");
+        }
+        
+        ty_cJSON*objInterval=ty_cJSON_GetObjectItem(obj, "interval");
+        if(objInterval){
+            node->rptInterval = objInterval->valueint;
+        }else{
+            vDBG_ERR("must set device report interval");
+        }
+        
+        ty_cJSON*objAddress=ty_cJSON_GetObjectItem(obj, "address");
+        if(objAddress){
+            node->address = objAddress->valueint;
+        }else{
+            vDBG_ERR("must set device slave address");
+        }
+        if(NULL==gSlaveDeviceInfoList){
+            gSlaveDeviceInfoList = node;
+            node->next = NULL;
+            node->previous = NULL;
+        }else{
+            node->next = gSlaveDeviceInfoList;
+            node->previous = NULL;
+            gSlaveDeviceInfoList = node;
+        }
+    }
+    ret=0;
+exit:
+    ty_cJSON_Delete(pObjCfg);
+    return ret;
 }
 
 

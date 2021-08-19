@@ -51,7 +51,6 @@ int report_batteryVal(INT_T btVal)
     
 }
 
-
 void readSerial(void){
 
 }

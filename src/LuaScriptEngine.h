@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 #define _log(x...) std::cout
+extern int sendPtr(TuyaProtoElement * pp);
 
 namespace iot {
     namespace lua {
@@ -64,7 +65,9 @@ namespace iot {
                         .addProperty ("valuebool", &TuyaProtoElement::get_valuebool, &TuyaProtoElement::set_valuebool)
                         .addProperty ("valuebitmap", &TuyaProtoElement::get_valuebitmap, &TuyaProtoElement::set_valuebitmap)
                         .addProperty ("timeStamp", &TuyaProtoElement::get_timeStamp, &TuyaProtoElement::set_timeStamp)
+                        .addFunction("send",&TuyaProtoElement::send)
                     .endClass()
+                    .addFunction("sendPtr",&sendPtr)
                     .beginClass<TuyaProto>("TuyaProto")
                         .addConstructor<void(*)()>()
                         .addData<int>("m_public", &TuyaProto::m_public)

@@ -7,6 +7,7 @@
 
 
 typedef struct _uartcfg{
+    uint8 channel;
     uint8 busProto;
     uint8 devName[32];
     uint32 baud;
@@ -26,9 +27,23 @@ typedef struct
 	struct sockaddr_in cli_addr;
 } LocalSocketRecord_t;
 
+typedef struct _slaveInfoList{
+    struct _slaveInfoList *next;
+    struct _slaveInfoList *previous;
+    uint8 channel;//identy which port that bind
+    uint8 pid;//use for get lua script
+    uint8 devName[128];//device nick name for user change
+    uint32 rptInterval;//report time interval
+    uint8 address;
+    void *pdata;
+}SLAVEINFOLIST_T;
+
+
 extern LocalSocketRecord_t* gpTcpClientList;
 
 int user_get_uartConfigure(IN CONST CHAR_T *str_cfg,UARTCFG_T**uartCfg);
+int user_get_slaveInfo(IN CONST CHAR_T *str_cfg);
+
 
 #endif//__RANDOM_TEST_SERVER_H__
 

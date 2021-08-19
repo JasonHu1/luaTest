@@ -1,4 +1,5 @@
 #include "tuya_proto.h"
+#include "app_debug_printf.h"
 
 /*
  * Test classes
@@ -46,6 +47,12 @@ bool testBFnCalled (fn_type f)
   bool b = B_functions.called[f];
   B_functions.called [f] = false;
   return b;
+}
+int sendPtr(TuyaProtoElement*pp){
+    vDBG_ERR("111");
+    vDBG_INFO("dp.value.m_dpid=%d",pp[0].m_dpid);
+    vDBG_INFO("dp.value.m_dpid=%d",pp[1].m_dpid);
+    vDBG_INFO("dp.value.m_dpid=%d",pp[2].m_dpid);
 }
 
 class A

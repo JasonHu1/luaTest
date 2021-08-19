@@ -55,7 +55,7 @@ int message_encode(void){
             TuyaProtoElement el = dp_data.getData();
             std::cout<<"el.get_dpid "<<el.get_dpid()<<std::endl;
 
-            engine.execute(pbuf, "encode_test", &dp_data,&tt);
+            engine.execute(pbuf, "report_dp", &dp_data,&tt);
 
             std::cout<<"\r\n------After lua parse--------"<<std::endl;
             std::cout<<"dp_data.m_public "<<dp_data.m_public<<std::endl;

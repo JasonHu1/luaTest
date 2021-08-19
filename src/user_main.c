@@ -279,6 +279,8 @@ int main(int argc, char **argv)
         .query = __dp_cmd_query
     };
 
+    message_encode();
+    
     char cfgfilePath[512]={0};
     vDBG_INFO("argc=%d",argc);
     for(int m=0;m<argc;m++){
@@ -367,7 +369,10 @@ int main(int argc, char **argv)
             }else{
             }
         }
-        
+        if(0!=user_get_slaveList(cfg_str)){
+            vDBG_ERR("can't load the slave device");
+            exit(-1);
+        }
         mb_mapping = modbus_mapping_new_start_address(
             UT_BITS_ADDRESS, UT_BITS_NB,
             UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,

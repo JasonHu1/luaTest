@@ -5,13 +5,14 @@
 #include <string>
 #include <string.h>
 #include <list>
+#include "tuya_cloud_com_defs.h"
+#include "app_debug_printf.h"
 
 
 using namespace std;
 
 class TuyaProtoElement{
     private:
-        unsigned int m_dpid;
         unsigned char m_type;
         int m_valueint;
         unsigned int m_valueenum;
@@ -20,6 +21,7 @@ class TuyaProtoElement{
         unsigned int m_valuebitmap;
         unsigned int m_timeStamp;
     public:
+        unsigned int m_dpid;
         unsigned int get_dpid() const{
             return m_dpid;
         }
@@ -71,6 +73,16 @@ class TuyaProtoElement{
         int func(){
             std::cout<<__FUNCTION__<<std::endl;
             return 0;
+        }
+
+        int send(void){
+            //dev_report_dp_json_async(DEVICE_ID_CONTACT, &dp_data, 3)!=OPRT_OK){
+            TY_OBJ_DP_S dp;
+            dp.dpid = m_dpid;
+            dp.type = m_type;
+            dp.value.dp_str = (CHAR_T*)malloc(10);
+            strcpy(dp.value.dp_str,m_valuestr.c_str());
+            vDBG_INFO("dp.value.dp_str=%s",dp.value.dp_str);
         }
 };
 
