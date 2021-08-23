@@ -258,7 +258,7 @@ VOID __dp_cmd_query(IN CONST TY_DP_QUERY_S *dp_qry)
     }
 }
 
-extern int app_main_loop(void*args);
+extern void* app_main_loop(void*args);
 
 int main(int argc, char **argv)
 {
@@ -329,6 +329,8 @@ int main(int argc, char **argv)
     }
     
     tuya_iot_reg_dp_cb(DP_GW, 0, &dp_cbs);
+    
+    timescale_init();
 
     {
         int s_tcp = -1,s_tcp_pi;
@@ -373,6 +375,10 @@ int main(int argc, char **argv)
             vDBG_ERR("can't load the slave device");
             exit(-1);
         }
+        
+        timescale_create(1, NULL, TIMER_SINGLE, timer_60s_cb);     
+        timescale_create(6, NULL, TIMER_SINGLE, timer_60s_cb);
+        
         mb_mapping = modbus_mapping_new_start_address(
             UT_BITS_ADDRESS, UT_BITS_NB,
             UT_INPUT_BITS_ADDRESS, UT_INPUT_BITS_NB,
@@ -411,11 +417,7 @@ int main(int argc, char **argv)
         for(i=0;i<gSerialNm;i++){
     //        add_epoll_fd(epollfd,modbus_get_socket(ctx[FD_RANK_SERIAL_START]));
         }
-        
-        if(pthread_create(&t,NULL,timescale_task_loop,NULL)!=0){
-            vDBG_ERR("timescale_task_loop pthread create failed");
-            exit(-1);
-        }
+       
 
         for (;;) {
             gTcpClientNm = socketSeverGetNumClients();

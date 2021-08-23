@@ -31,7 +31,7 @@ typedef struct _slaveInfoList{
     struct _slaveInfoList *next;
     struct _slaveInfoList *previous;
     uint8 channel;//identy which port that bind
-    uint8 pid;//use for get lua script
+    uint8 pid[128];//use for get lua script
     uint8 devName[128];//device nick name for user change
     uint32 rptInterval;//report time interval
     uint8 address;

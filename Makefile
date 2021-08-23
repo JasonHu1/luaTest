@@ -40,7 +40,7 @@ LINKFLAGS += $(USER_LINK_FLAGS)
 LINKFLAGS += `pkg-config --libs libmodbus`
 
 CCFLAGS = \
-	-g -fPIC -MMD
+	-g -fPIC -MMD -Werror=incompatible-pointer-types -O0
 CCFLAGS += `pkg-config --cflags libmodbus`
 
 CPPFLAGS += -std=c++11

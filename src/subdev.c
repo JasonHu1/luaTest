@@ -27,7 +27,7 @@ int report_status(char status)
     dp_data[2].dpid = 4;
     dp_data[2].type = PROP_BOOL;
     dp_data[2].value.dp_bool = status;
-    if(ret = dev_report_dp_json_async(DEVICE_ID_CONTACT, &dp_data, 3)!=OPRT_OK){
+    if(ret = dev_report_dp_json_async(DEVICE_ID_CONTACT, (const TY_OBJ_DP_S *)&dp_data, 3)!=OPRT_OK){
         vDBG_ERR("ret=%d",ret);
     }
     vDBG_INFO("report ok");
@@ -40,11 +40,11 @@ int report_batteryVal(INT_T btVal)
     TY_OBJ_DP_S  dp_data[3];
 
     //battery_percentage
-    dp_data[1].dpid = 2;
-    dp_data[1].type = PROP_VALUE;
-    dp_data[1].value.dp_value = btVal;
+    dp_data[0].dpid = 2;
+    dp_data[0].type = PROP_VALUE;
+    dp_data[0].value.dp_value = btVal;
 
-    if(ret = dev_report_dp_json_async(DEVICE_ID_CONTACT, &dp_data, 3)!=OPRT_OK){
+    if(ret = dev_report_dp_json_async(DEVICE_ID_CONTACT, (const TY_OBJ_DP_S *)&dp_data, 3)!=OPRT_OK){
         vDBG_ERR("ret=%d",ret);
     }
     vDBG_INFO("report ok");
@@ -59,22 +59,22 @@ void writeSeial(void){
 }
 
 
-uint8_t *buffer[1024]={0};
+uint8_t buffer[1024]={0};
+int timer_60s_cb(void * param);
 
-
-int app_main_loop(void*args){
+void* app_main_loop(void*args){
     OPERATE_RET ret=OPRT_OK;
     int status;
     vDBG_INFO("app_main_loop pthread start");
     for(;;){
-        sleep(1);
-        #if 1
-        if(!isBind){
-            vDBG_INFO("subdev is Not bind success!!!");
-            continue;
-        }
+        //timescale_create(6, NULL, TIMER_SINGLE, timer_60s_cb);
+        sleep(5);
+        #if 0
+//        if(!isBind){
+//            vDBG_INFO("subdev is Not bind success!!!");
+//            continue;
+//        }
 
-        message_encode();
         //01 (0x01) Read Coils
         
         modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);

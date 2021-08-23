@@ -31,7 +31,7 @@
         },
         {
             "channel":1,
-            "slave":12,
+            "address":12,
             "interval":500,
             "pid":"test"
         }

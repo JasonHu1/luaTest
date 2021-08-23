@@ -22,6 +22,7 @@ class TuyaProtoElement{
         unsigned int m_timeStamp;
     public:
         unsigned int m_dpid;
+        TY_OBJ_DP_S *pDpArray;
         unsigned int get_dpid() const{
             return m_dpid;
         }
@@ -83,6 +84,17 @@ class TuyaProtoElement{
             dp.value.dp_str = (CHAR_T*)malloc(10);
             strcpy(dp.value.dp_str,m_valuestr.c_str());
             vDBG_INFO("dp.value.dp_str=%s",dp.value.dp_str);
+        }
+        int sendPtr(void){
+            vDBG_ERR("111");
+            vDBG_INFO("dp.value.m_dpid=%d",pDpArray[0].dpid);
+            vDBG_INFO("dp.value.m_dpid=%d",pDpArray[1].dpid);
+            vDBG_INFO("dp.value.m_dpid=%d",pDpArray[2].dpid);
+        }
+        int create_DP_Array(char num)
+        {
+            pDpArray = (TY_OBJ_DP_S*)malloc(sizeof(TY_OBJ_DP_S)*num);
+            return 0;
         }
 };
 

@@ -48,12 +48,19 @@ bool testBFnCalled (fn_type f)
   B_functions.called [f] = false;
   return b;
 }
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int sendPtr(TuyaProtoElement*pp){
     vDBG_ERR("111");
     vDBG_INFO("dp.value.m_dpid=%d",pp[0].m_dpid);
     vDBG_INFO("dp.value.m_dpid=%d",pp[1].m_dpid);
     vDBG_INFO("dp.value.m_dpid=%d",pp[2].m_dpid);
 }
+#ifdef __cplusplus
+}
+#endif
 
 class A
 {
