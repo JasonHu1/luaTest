@@ -18,7 +18,14 @@ local devid="0006dffffe67e2ac"
 function report_dp(source,target)
     print("type(source)..",type(source))
     print("sum..",source + target)
-    readData(attribute)
+    local nArray = readData(attribute)
+
+    print("type(nArray)..",type(nArray))
+    print("nArray=",nArray)
+    print("length=",#nArray)
+    for n=0,#nArray,1 do
+       print("nArray=",nArray[n]) 
+    end
 
     print("jason-------")
     --local dp={dpid=2,type=2}

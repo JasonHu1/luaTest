@@ -139,7 +139,7 @@ void * timescale_task_loop(void*args){
         
     }
 }
-uint8_t buffer[];
+uint8_t buffer1[]={99,98,97,96,95,94,93};
 
 void printLuaStack(lua_State *L){
     int nIndex;
@@ -201,6 +201,18 @@ static int readData(lua_State* L){
 
     vdbg_printf("fc=%d,addr=%d,cnt=%d",fc,addr,cnt)    ;
 #endif
+    printLuaStack(L);
+
+    lua_newtable(L);
+    for(int i=6;i>=0;i--){
+        lua_pushinteger(L,i);//key
+        lua_pushinteger(L,buffer1[i]);
+        lua_settable(L,-3);
+    }
+    printLuaStack(L);
+
+    return 1;
+#if 0
     //01 (0x01) Read Coils
     modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);
     if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 10,buffer)!= -1){
@@ -212,7 +224,9 @@ static int readData(lua_State* L){
     }else{
         vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
     }
-
+#else
+    
+#endif
 }
 TY_OBJ_DP_S source={
     .dpid=1,
