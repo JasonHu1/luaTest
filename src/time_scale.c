@@ -140,25 +140,67 @@ void * timescale_task_loop(void*args){
     }
 }
 uint8_t buffer[];
+
+void printLuaStack(lua_State *L){
+    int nIndex;
+    int nType;
+    fprintf(stderr, "================栈顶================\n");
+    fprintf(stderr, "   索引  类型          值\n");
+    for( nIndex = lua_gettop(L); nIndex > 0; --nIndex){
+        nType = lua_type(L, nIndex);
+         fprintf(stderr,"   (%d)  %s         %s\n",nIndex, 
+         lua_typename(L,nType), lua_tostring(L,nIndex));  
+    }
+    fprintf(stderr, "================栈底================\n");
+
+}
+
 static int readData(lua_State* L){
     int ret;
+    int n = lua_gettop(L);
+    vDBG_INFO("stack param count=%d",n);
+    if(!lua_istable(L,-1)){
+        vDBG_ERR("stack top is not table");
+        return -1;
+    }
+#if 0
+    /*  表放在索引 't' 处 */
+     lua_pushnil(L);  /* 第一个键 */
+     while (lua_next(L, -2) != 0) {
+       /* 使用 '键' （在索引 -2 处） 和 '值' （在索引 -1 处）*/
+       printf("%s - %s\n",
+              lua_typename(L, lua_type(L, -2)),
+              lua_typename(L, lua_type(L, -1)));
+       //拷贝一份 key 到栈顶，然后对它做 lua_tostring 就不会改变原始的 key 值了
+       lua_pushvalue(L, -2);
+       if(lua_typename(L, lua_type(L, -1))){
+            printf("%s =  %d\r\n",lua_tostring(L,-1),lua_tointeger(L, -2));
+       }else{
+            printf("[%d] =  %d\r\n",lua_tonumber(L, -1),lua_tointeger(L, -2));
+       }
+       
+       /* 移除 '值' ；保留 '键' 做下一次迭代 */
+       lua_pop(L, 2);
+     }
+#else
     lua_pushstring(L,"fc");
     lua_gettable(L,-2);
-    int fc=lua_tonumber(L, -1);
-    lua_pop(L, 2);
+    int fc=lua_tointeger(L, -1);
+    lua_pop(L, 1);
 
     lua_pushstring(L,"addr");
     lua_gettable(L,-2);
-    int addr=lua_tonumber(L, -1);
-    lua_pop(L, 2);
+    int addr=lua_tointeger(L, -1);
+    lua_pop(L, 1);
 
     lua_pushstring(L,"cnt");
     lua_gettable(L,-2);
-    int cnt=lua_tonumber(L, -1);
-    lua_pop(L, 2);
+    int cnt=lua_tointeger(L, -1);
+    lua_pop(L, 1);
+
 
     vdbg_printf("fc=%d,addr=%d,cnt=%d",fc,addr,cnt)    ;
-    
+#endif
     //01 (0x01) Read Coils
     modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);
     if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 10,buffer)!= -1){
@@ -180,6 +222,8 @@ TY_OBJ_DP_S target;
 
 int timer_60s_cb(void*param)
 {
+    int ret;
+    TY_OBJ_DP_S *pSource,*pTarget;
     vDBG_INFO("Enter CB function");
     //1.创建一个state
     lua_State *L = luaL_newstate();
@@ -190,17 +234,31 @@ int timer_60s_cb(void*param)
     }
     luaL_openlibs(L);
     lua_register(L, "readData", readData);
-    //2. 运行脚本
-    luaL_dofile(L, "../../test.lua");
-    /*3.userdata 参数入栈*/
-    lua_pushlightuserdata(L, &source);
-    lua_setglobal(L, "source"); 
-
-    lua_pushlightuserdata(L, &target);
-    lua_setglobal(L, "target"); 
     
+    //2. 运行脚本
+    int error=luaL_dofile(L, "../../test.lua");
+    if(error) {
+        vDBG_ERR("Error: %s", lua_tostring(L,-1));
+        return 1;
+    }
+#if 1
     //4.获得lua函数名并执行
-    lua_getglobal(L,"readData");
-    lua_pcall(L, 0, 0, 0);
+    lua_getglobal(L,"report_dp");
+
+    /*3.参数入栈*/
+    lua_pushnumber(L, 10);          // 压入第一个参数  
+    lua_pushnumber(L, 20);          // 压入第二个参数  
+
+    if((ret = lua_pcall(L, 2, 0, 0))!=LUA_OK)//有2个入参数，0个返回值
+    {
+        const char *pErrorMsg = lua_tostring(L, -1);  
+        vDBG_ERR("ret=%d,%s",ret,pErrorMsg);
+        lua_close(L);  
+        return ;  
+    }
+#endif
+    /* 清除Lua */    
+    lua_close(L); 
+    
     return 0;
 }

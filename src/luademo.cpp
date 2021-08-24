@@ -36,6 +36,7 @@ int message_encode(void){
     
     ThirdFormat tt;
     LuaScriptEngine engine;
+    return 0;
     FILE *fp = fopen("../../test.lua", "r");
     std::cout<<"fp:"<<fp<<std::endl;
     printf("fp:%d\r\n",fp);
