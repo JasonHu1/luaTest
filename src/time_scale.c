@@ -299,8 +299,8 @@ int send_report(lua_State* L){
         }
         lua_pop(L, 2);//pop the vale and embed table
     }
-    if((ret = dev_report_dp_json_async(devid, (const TY_OBJ_DP_S *)&dp_send, dp_cnt))!=OPRT_OK){
-        vDBG_ERR("ret=%04x",ret);
+    if((ret = dev_report_dp_json_async(devid,dp_send, dp_cnt))!=OPRT_OK){
+        vDBG_ERR("ret=0x%04x",ret);
     }
     lua_pushinteger(L,ret);
     free(dp_send);

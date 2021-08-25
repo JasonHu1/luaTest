@@ -43,11 +43,9 @@ function report_dp(source,target)
         {dpid=1,type=1},--温度
         {dpid=2,type=1}--湿度
     }
-    for n=0,#nArray,1 do
-        print("dp[n].dpid=",dp[n+1].dpid) 
-        dp[n+1]["value"]= math.floor(nArray[n]/10)
-        print("dp[n+1][\"value\"] = ",dp[n+1]["value"])
-     end
+
+    dp[1]["value"]= nArray[0]--温度
+    dp[2]["value"]= math.floor(nArray[1]/10)
 
 
     local ret=send_report(target,dp,attribute.cnt)
