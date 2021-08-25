@@ -5,6 +5,7 @@
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
+#include "lua_modbus.h"
 
 
 
@@ -139,6 +140,32 @@ void * timescale_task_loop(void*args){
         
     }
 }
+const MODBUS_FUNCTION_MAP_T gFunctionMap = {
+    modbus_read_bits,
+    modbus_read_input_bits,
+    modbus_read_registers,
+    modbus_read_input_registers,
+    modbus_write_bit,
+    modbus_write_register,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    modbus_write_bits,
+    modbus_write_registers,
+    modbus_report_slave_id,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    modbus_mask_write_register,
+    modbus_write_and_read_registers
+};
+
 uint8_t buffer1[]={99,98,97,96,95,94,93};
 
 void printLuaStack(lua_State *L){
@@ -163,26 +190,6 @@ static int readData(lua_State* L){
         vDBG_ERR("stack top is not table");
         return -1;
     }
-#if 0
-    /*  表放在索引 't' 处 */
-     lua_pushnil(L);  /* 第一个键 */
-     while (lua_next(L, -2) != 0) {
-       /* 使用 '键' （在索引 -2 处） 和 '值' （在索引 -1 处）*/
-       printf("%s - %s\n",
-              lua_typename(L, lua_type(L, -2)),
-              lua_typename(L, lua_type(L, -1)));
-       //拷贝一份 key 到栈顶，然后对它做 lua_tostring 就不会改变原始的 key 值了
-       lua_pushvalue(L, -2);
-       if(lua_typename(L, lua_type(L, -1))){
-            printf("%s =  %d\r\n",lua_tostring(L,-1),lua_tointeger(L, -2));
-       }else{
-            printf("[%d] =  %d\r\n",lua_tonumber(L, -1),lua_tointeger(L, -2));
-       }
-       
-       /* 移除 '值' ；保留 '键' 做下一次迭代 */
-       lua_pop(L, 2);
-     }
-#else
     lua_pushstring(L,"fc");
     lua_gettable(L,-2);
     int fc=lua_tointeger(L, -1);
@@ -198,9 +205,9 @@ static int readData(lua_State* L){
     int cnt=lua_tointeger(L, -1);
     lua_pop(L, 1);
 
-
     vdbg_printf("fc=%d,addr=%d,cnt=%d",fc,addr,cnt)    ;
-#endif
+
+#if 0
 
     lua_newtable(L);
     for(int i=6;i>=0;i--){
@@ -210,19 +217,18 @@ static int readData(lua_State* L){
     }
 
     return 1;
-#if 0
+#else
     //01 (0x01) Read Coils
     modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);
-    if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 10,buffer)!= -1){
+    if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 10,buffer1)!= -1){
         vDBG_INFO("modbus_read_bits ok1");
         for(int i=0;i<10;i++){
-            printf("%02x ",buffer[i]);
+            printf("%02x ",buffer1[i]);
         }
         printf("\r\n");
     }else{
         vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
     }
-#else
     
 #endif
 }
@@ -312,7 +318,8 @@ int timer_60s_cb(void*param)
 {
     int ret;
     TY_OBJ_DP_S *pSource,*pTarget;
-    vDBG_INFO("Enter CB function");
+    int slaveAddr = *(int*)param;
+    vDBG_INFO("Enter CB function,slaveAddr=%d",slaveAddr);
     //1.创建一个state
     lua_State *L = luaL_newstate();
     if (L == NULL)
@@ -323,6 +330,17 @@ int timer_60s_cb(void*param)
     luaL_openlibs(L);
     lua_register(L, "readData", readData);
     lua_register(L, "send_report",send_report);
+    lua_register(L, "modbus_read_bits",__modbus_read_bits);
+    lua_register(L, "modbus_read_input_bits",__modbus_read_input_bits);
+    lua_register(L, "modbus_read_registers",__modbus_read_registers);
+    lua_register(L, "modbus_read_input_registers",__modbus_read_input_registers);
+    lua_register(L, "modbus_write_bit",__modbus_write_bit);
+    lua_register(L, "modbus_write_register",__modbus_write_register);
+    lua_register(L, "modbus_write_bits",__modbus_write_bits);
+    lua_register(L, "modbus_write_registers",__modbus_write_bits);
+    lua_register(L, "modbus_report_slave_id",__modbus_report_slave_id);
+    lua_register(L, "modbus_mask_write_register",__modbus_mask_write_register);
+    lua_register(L, "modbus_write_and_read_registers",__modbus_write_and_read_registers);
     
     //2. 运行脚本
     int error=luaL_dofile(L, "../../test.lua");
@@ -330,12 +348,12 @@ int timer_60s_cb(void*param)
         vDBG_ERR("Error: %s", lua_tostring(L,-1));
         return 1;
     }
-#if 1
+
     //4.获得lua函数名并执行
     lua_getglobal(L,"report_dp");
 
     /*3.参数入栈*/
-    lua_pushnumber(L, 10);          // 压入第一个参数  
+    lua_pushinteger(L, slaveAddr);   // 压入第一个参数  
     lua_pushnumber(L, 20);          // 压入第二个参数  
 
     if((ret = lua_pcall(L, 2, 0, 0))!=LUA_OK)//有2个入参数，0个返回值
@@ -345,7 +363,7 @@ int timer_60s_cb(void*param)
         lua_close(L);  
         return ;  
     }
-#endif
+
     /* 清除Lua */    
     lua_close(L); 
     

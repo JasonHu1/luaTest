@@ -375,8 +375,9 @@ int main(int argc, char **argv)
             vDBG_ERR("can't load the slave device");
             exit(-1);
         }
-        
-        timer_60s_cb(NULL);
+
+        int slaveId=11;
+        timer_60s_cb(&slaveId);
         
 //        timescale_create(1, NULL, TIMER_SINGLE, timer_60s_cb);     
 //        timescale_create(6, NULL, TIMER_SINGLE, timer_60s_cb);

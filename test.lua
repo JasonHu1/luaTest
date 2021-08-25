@@ -30,8 +30,9 @@ print("ENUM_TYPE.PROP_BOOL",ENUM_TYPE.PROP_BITMAP)
 local devid="0006dffffe67e2ac"
 function report_dp(source,target)
     print("type(source)..",type(source))
-    print("sum..",source + target)
-    local nArray = readData(attribute)
+    print("slaveAddr..",source)
+    attribute.slave = source
+    local nArray = modbus_read_bits(attribute)
 
     print("type(nArray)..",type(nArray))
     print("nArray=",nArray)
@@ -40,7 +41,6 @@ function report_dp(source,target)
        print("nArray=",nArray[n]) 
     end
 
-    print("jason-------")
     local dp={
         {dpid=1,type=1},
         {dpid=2,type=1},
@@ -51,7 +51,6 @@ function report_dp(source,target)
     }
     for n=1,#nArray,1 do
         print("dp[n].dpid=",dp[n].dpid) 
-        print("dp[n].dpid=",dp[n]["dpid"]) 
         dp[n]["value"]=nArray[n]
      end
 
