@@ -1,6 +1,10 @@
 #ifndef __RANDOM_TEST_SERVER_H__
 #define __RANDOM_TEST_SERVER_H__
 #include "app_debug_printf.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 
 #define BUS_PROTOCOL_MODBUS         1
 #define BUS_PROTOCOL_KNX            2
@@ -34,7 +38,7 @@ typedef struct _slaveInfoList{
     uint8 pid[128];//use for get lua script
     uint8 devName[128];//device nick name for user change
     uint32 rptInterval;//report time interval
-    uint8 address;
+    uint8 slave;
     void *pdata;
 }SLAVEINFOLIST_T;
 

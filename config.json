@@ -4,7 +4,7 @@
     "authkey": "dqFRDVgnrOtV2zghkA1JhXur3hWE08zv",
     "storage_path": "./",
     "sw_ver": "1.0.0",
-    "log_level": 2,
+    "log_level": 4,
     "user": [
         {
             "tp": 10,
@@ -14,9 +14,9 @@
     "uart":[
         {
             "proto":"modbus",
-            "dev_nmae":"/dev/ttyUSB0",
-            "baud":115200,
-            "parity":"even",
+            "dev_nmae":"/dev/ttyUSB1",
+            "baud":9600,
+            "parity":"none",
             "data_bits":8,
             "stop_bits":1,
             "channel":1
@@ -25,15 +25,15 @@
     "slaves":[
         {
             "channel":1,
-            "address":11,
-            "interval":300,
+            "slave":11,
+            "interval":3,
             "pid":"test"
         },
         {
             "channel":1,
-            "address":12,
-            "interval":500,
-            "pid":"test"
+            "slave":1,
+            "interval":1,
+            "pid":"ymig1ngqabhkuvxj"
         }
     ]
 }

@@ -6,6 +6,7 @@
 #include "lualib.h"
 #include "lauxlib.h"
 #include "lua_modbus.h"
+#include "random-test-server.h"
 
 
 
@@ -299,11 +300,9 @@ int send_report(lua_State* L){
         lua_pop(L, 2);//pop the vale and embed table
     }
     if((ret = dev_report_dp_json_async(devid, (const TY_OBJ_DP_S *)&dp_send, dp_cnt))!=OPRT_OK){
-        vDBG_ERR("ret=%d",ret);
-         lua_pushinteger(L,-1);
-    }else{
-        lua_pushinteger(L,0);
+        vDBG_ERR("ret=%04x",ret);
     }
+    lua_pushinteger(L,ret);
     free(dp_send);
     return 1;
 }
@@ -318,8 +317,12 @@ int timer_60s_cb(void*param)
 {
     int ret;
     TY_OBJ_DP_S *pSource,*pTarget;
-    int slaveAddr = *(int*)param;
-    vDBG_INFO("Enter CB function,slaveAddr=%d",slaveAddr);
+    SLAVEINFOLIST_T *n = (SLAVEINFOLIST_T*)param;
+    if(NULL==n){
+        vDBG_ERR("cb param NULL");
+        return -1;
+    }
+    vDBG_INFO("Enter CB function,slaveAddr=%d",n->slave);
     //1.创建一个state
     lua_State *L = luaL_newstate();
     if (L == NULL)
@@ -343,7 +346,9 @@ int timer_60s_cb(void*param)
     lua_register(L, "modbus_write_and_read_registers",__modbus_write_and_read_registers);
     
     //2. 运行脚本
-    int error=luaL_dofile(L, "../../test.lua");
+    char path[512]={0};
+    sprintf(path,"../../%s.lua",n->pid);
+    int error=luaL_dofile(L, path);
     if(error) {
         vDBG_ERR("Error: %s", lua_tostring(L,-1));
         return 1;
@@ -352,9 +357,12 @@ int timer_60s_cb(void*param)
     //4.获得lua函数名并执行
     lua_getglobal(L,"report_dp");
 
+    char deviceId[64]={0};
+    sprintf(deviceId,"channel_%d_slave_%d",n->channel,n->slave);
+
     /*3.参数入栈*/
-    lua_pushinteger(L, slaveAddr);   // 压入第一个参数  
-    lua_pushnumber(L, 20);          // 压入第二个参数  
+    lua_pushinteger(L, n->slave);   // 压入第一个参数  
+    lua_pushstring(L, deviceId);          // 压入第二个参数  
 
     if((ret = lua_pcall(L, 2, 0, 0))!=LUA_OK)//有2个入参数，0个返回值
     {

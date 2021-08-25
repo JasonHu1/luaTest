@@ -357,7 +357,7 @@ exit:
     return num;
 }
 
-int user_get_slaveList(IN CONST CHAR_T *str_cfg)
+int user_save_slaveList(IN CONST CHAR_T *str_cfg)
 {
     int n,ret;
     int num ;
@@ -414,9 +414,9 @@ int user_get_slaveList(IN CONST CHAR_T *str_cfg)
             vDBG_ERR("must set device report interval");
         }
         
-        ty_cJSON*objAddress=ty_cJSON_GetObjectItem(obj, "address");
+        ty_cJSON*objAddress=ty_cJSON_GetObjectItem(obj, "slave");
         if(objAddress){
-            node->address = objAddress->valueint;
+            node->slave = objAddress->valueint;
         }else{
             vDBG_ERR("must set device slave address");
         }
@@ -436,4 +436,7 @@ exit:
     return ret;
 }
 
+SLAVEINFOLIST_T* user_get_slaveList_node(void){
+
+}
 

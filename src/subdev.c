@@ -3,6 +3,9 @@
 #include "app_defs_types.h"
 #include <errno.h>
 #include "unit-test.h"
+#include "random-test-server.h"
+#include "tuya_gw_subdev_api.h"
+#include "tuya_gw_com_api.h"
 
 int isBind=0;
 
@@ -58,10 +61,54 @@ void writeSeial(void){
 
 }
 
+int regist_subdevice(CHAR_T *dev_id,CHAR_T *pid){
+    OPERATE_RET op_ret = OPRT_OK;
+    UINT_T uddd = 0x00000001;
+    //CHAR_T *dev_id = DEVICE_ID_CONTACT;
+    //CHAR_T *pid = PRODUCT_ID_CONTACT;
+    CHAR_T *ver = "1.0.0";
+    
+    DEV_DESC_IF_S *dev_if = NULL;
+
+    dev_if = tuya_iot_get_dev_if(dev_id);
+    if (dev_if != NULL) {
+        vDBG_ERR("devid=%s had register,bind_status=%d,bind=%d",dev_id,dev_if->bind_status,dev_if->bind);
+        return -1;
+    }
+
+    PR_DEBUG("test bind device, dev_id: %s,pid=%s", dev_id,pid);
+
+    op_ret = tuya_iot_gw_bind_dev(GP_DEV_ATH_1, uddd, dev_id, pid, ver);
+    if (op_ret != OPRT_OK) {
+        PR_WARN("tuya_iot_gw_bind_dev err: %d", op_ret);
+        return -1;
+    }
+
+    return 0;
+}
 
 uint8_t buffer[1024]={0};
 int timer_60s_cb(void * param);
+extern SLAVEINFOLIST_T *gSlaveDeviceInfoList;
 
+int start_slave_timeScale(void){
+    SLAVEINFOLIST_T*node =  NULL;
+    node = gSlaveDeviceInfoList;
+    if(gSlaveDeviceInfoList==NULL){
+        vDBG_WARN("Slave device list NULL");
+        return -1;
+    }
+    do{
+        char deviceId[64]={0};
+        sprintf(deviceId,"channel_%d_slave_%d",node->channel,node->slave);
+        vDBG_APP(DBG_DEBUG,"deviceId=%s,pid=%s",deviceId,node->pid);
+        regist_subdevice(deviceId,node->pid);
+        timescale_create(node->rptInterval,node, TIMER_REPEATABLE, timer_60s_cb);
+        node = node->next;
+    }while(node!=NULL);
+    return 0;
+
+}
 void* app_main_loop(void*args){
     OPERATE_RET ret=OPRT_OK;
     int status;

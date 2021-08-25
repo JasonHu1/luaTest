@@ -371,16 +371,13 @@ int main(int argc, char **argv)
             }else{
             }
         }
-        if(0!=user_get_slaveList(cfg_str)){
+        if(0!=user_save_slaveList(cfg_str)){
             vDBG_ERR("can't load the slave device");
             exit(-1);
         }
 
-        int slaveId=11;
-        timer_60s_cb(&slaveId);
         
-//        timescale_create(1, NULL, TIMER_SINGLE, timer_60s_cb);     
-//        timescale_create(6, NULL, TIMER_SINGLE, timer_60s_cb);
+        start_slave_timeScale();
         
         mb_mapping = modbus_mapping_new_start_address(
             UT_BITS_ADDRESS, UT_BITS_NB,
