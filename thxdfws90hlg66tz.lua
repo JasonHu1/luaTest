@@ -1,5 +1,5 @@
 --[[
-    Modbus 温湿度脚本
+    Modbus PM2.5/10
 ]]--
 local math=require("math")
 

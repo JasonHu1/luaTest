@@ -34,6 +34,24 @@
             "slave":1,
             "interval":1,
             "pid":"ymig1ngqabhkuvxj"
+        },
+        {
+            "channel":1,
+            "slave":2,
+            "interval":2,
+            "pid":"xad1xwle4mhm2nzs"
+        },
+        {
+            "channel":1,
+            "slave":3,
+            "interval":1,
+            "pid":"auyi2lebgaqcjxan"
+        },
+        {
+            "channel":1,
+            "slave":4,
+            "interval":2,
+            "pid":"thxdfws90hlg66tz"
         }
     ]
 }
