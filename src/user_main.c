@@ -376,8 +376,9 @@ int main(int argc, char **argv)
             exit(-1);
         }
 
-        
-        start_slave_timeScale();
+        closure_test(NULL);
+        exit(0);
+        //start_slave_timeScale();
         
         mb_mapping = modbus_mapping_new_start_address(
             UT_BITS_ADDRESS, UT_BITS_NB,

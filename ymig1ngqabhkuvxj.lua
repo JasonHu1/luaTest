@@ -19,15 +19,13 @@ local ENUM_TYPE={
     PROP_BITMAP =4
 }
 
-print("ENUM_TYPE.PROP_BOOL",ENUM_TYPE.PROP_BOOL)
-print("ENUM_TYPE.PROP_VALUE",ENUM_TYPE.PROP_VALUE)
-print("ENUM_TYPE.PROP_VALUE",ENUM_TYPE.PROP_VALUE)
-print("ENUM_TYPE.PROP_ENUM",ENUM_TYPE.PROP_ENUM)
-print("ENUM_TYPE.PROP_BITMAP",ENUM_TYPE.PROP_BITMAP)
-
-local devid="0006dffffe67e2ac"
-function report_dp(source,target)
+function report_dp(source,target,c)
     print("type(source)..",type(source))
+    print("type(c)..",type(c))
+
+    print("c.dpid..",(c.dpid))
+    print("c.type..",c.type)
+    
     print("slaveAddr..",source)
     attribute.slave = source
     local nArray = modbus_read_registers(attribute)
