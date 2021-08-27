@@ -322,7 +322,7 @@ int timer_60s_cb(void*param)
         vDBG_ERR("cb param NULL");
         return -1;
     }
-    vDBG_INFO("Enter CB function,slaveAddr=%d",n->slave);
+    vDBG_INFO("Enter CB function,pid=%s,slaveAddr=%d",n->pid,n->slave);
     //1.创建一个state
     lua_State *L = luaL_newstate();
     if (L == NULL)
@@ -416,7 +416,7 @@ int closure_test(void*param)
     lua_setglobal(L,"upvalue_test");
 
     //2. 运行脚本
-    int error=luaL_dofile(L, "../../test.lua");
+    int error=luaL_dofile(L, "../../test_closure.lua");
     if(error) {
         vDBG_ERR("Error: %s", lua_tostring(L,-1));
         return 1;

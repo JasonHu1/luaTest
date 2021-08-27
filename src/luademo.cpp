@@ -36,8 +36,8 @@ int message_encode(void){
     
     ThirdFormat tt;
     LuaScriptEngine engine;
-    return 0;
-    FILE *fp = fopen("../../test.lua", "r");
+    
+    FILE *fp = fopen("../../test_luaBridge.lua", "r");
     std::cout<<"fp:"<<fp<<std::endl;
     printf("fp:%d\r\n",fp);
     if(fp){
@@ -56,7 +56,7 @@ int message_encode(void){
             TuyaProtoElement el = dp_data.getData();
             std::cout<<"el.get_dpid "<<el.get_dpid()<<std::endl;
 
-            engine.execute(pbuf, "report_dp", &dp_data,&tt);
+            engine.execute(pbuf, "encode_test", &dp_data,&tt);
 
             std::cout<<"\r\n------After lua parse--------"<<std::endl;
             std::cout<<"dp_data.m_public "<<dp_data.m_public<<std::endl;

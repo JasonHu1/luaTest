@@ -279,7 +279,7 @@ int main(int argc, char **argv)
         .query = __dp_cmd_query
     };
 
-    //message_encode();
+    message_encode();
     
     char cfgfilePath[512]={0};
     vDBG_INFO("argc=%d",argc);
@@ -377,8 +377,8 @@ int main(int argc, char **argv)
         }
 
         closure_test(NULL);
-        exit(0);
-        //start_slave_timeScale();
+
+        start_slave_timeScale();
         
         mb_mapping = modbus_mapping_new_start_address(
             UT_BITS_ADDRESS, UT_BITS_NB,

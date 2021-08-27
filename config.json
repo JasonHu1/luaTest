@@ -14,7 +14,7 @@
     "uart":[
         {
             "proto":"modbus",
-            "dev_nmae":"/dev/ttyUSB1",
+            "dev_nmae":"/dev/ttyUSB0",
             "baud":9600,
             "parity":"none",
             "data_bits":8,
@@ -26,31 +26,31 @@
         {
             "channel":1,
             "slave":11,
-            "interval":3,
+            "interval":1,
             "pid":"test"
         },
         {
             "channel":1,
             "slave":1,
-            "interval":1,
+            "interval":10,
             "pid":"ymig1ngqabhkuvxj"
         },
         {
             "channel":1,
             "slave":2,
-            "interval":2,
+            "interval":12,
             "pid":"xad1xwle4mhm2nzs"
         },
         {
             "channel":1,
             "slave":3,
-            "interval":1,
+            "interval":21,
             "pid":"auyi2lebgaqcjxan"
         },
         {
             "channel":1,
             "slave":4,
-            "interval":2,
+            "interval":22,
             "pid":"thxdfws90hlg66tz"
         }
     ]
