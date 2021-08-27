@@ -37,7 +37,7 @@ int message_encode(void){
     ThirdFormat tt;
     LuaScriptEngine engine;
     
-    FILE *fp = fopen("../../test_luaBridge.lua", "r");
+    FILE *fp = fopen("../../lua/test_luaBridge.lua", "r");
     std::cout<<"fp:"<<fp<<std::endl;
     printf("fp:%d\r\n",fp);
     if(fp){

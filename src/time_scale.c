@@ -349,7 +349,7 @@ int timer_60s_cb(void*param)
     
     //4. 运行脚本
     char path[512]={0};
-    sprintf(path,"../../%s.lua",n->pid);
+    sprintf(path,"../../lua/%s.lua",n->pid);
     int error=luaL_dofile(L, path);
     if(error) {
         vDBG_ERR("Error: %s", lua_tostring(L,-1));
@@ -416,7 +416,7 @@ int closure_test(void*param)
     lua_setglobal(L,"upvalue_test");
 
     //2. 运行脚本
-    int error=luaL_dofile(L, "../../test_closure.lua");
+    int error=luaL_dofile(L, "../../lua/test_closure.lua");
     if(error) {
         vDBG_ERR("Error: %s", lua_tostring(L,-1));
         return 1;
