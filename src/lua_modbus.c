@@ -149,11 +149,7 @@ int __modbus_read_registers(lua_State* L){
     //01 (0x01) Read Coils
     modbus_set_slave(ctx[FD_RANK_SERIAL_START], slave);
     if(ret = modbus_read_registers(ctx[FD_RANK_SERIAL_START],addr, cnt,rdData)!= -1){
-        vDBG_INFO("modbus_read_bits ok1");
-        for(int i=0;i<cnt;i++){
-            printf("%02x ",rdData[i]);
-        }
-        printf("\r\n");
+        vDBG_INFO("modbus_read_bits ok");
     }else{
         vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
     }

@@ -76,8 +76,6 @@ int regist_subdevice(CHAR_T *dev_id,CHAR_T *pid){
         return -1;
     }
 
-    PR_DEBUG("test bind device, dev_id: %s,pid=%s", dev_id,pid);
-
     op_ret = tuya_iot_gw_bind_dev(GP_DEV_ATH_1, uddd, dev_id, pid, ver);
     if (op_ret != OPRT_OK) {
         PR_WARN("tuya_iot_gw_bind_dev err: %d", op_ret);
@@ -101,7 +99,7 @@ int start_slave_timeScale(void){
     do{
         char deviceId[64]={0};
         sprintf(deviceId,"channel_%d_slave_%d",node->channel,node->slave);
-        vDBG_APP(DBG_DEBUG,"deviceId=%s,pid=%s",deviceId,node->pid);
+        vDBG_APP(DBG_MSGDUMP,"deviceId=%s,pid=%s",deviceId,node->pid);
         regist_subdevice(deviceId,node->pid);
         timescale_create(node->rptInterval,node, TIMER_REPEATABLE, timer_60s_cb);
         node = node->next;

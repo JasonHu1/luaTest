@@ -13,7 +13,7 @@ extern unsigned int g_debug_module;
 #define MODULE_DBG_MODULE02         0x0004U
 #define MODULE_DBG_MODULE03         0x0008U
 #define MODULE_DBG_SDKCb04          0x0010U
-#define MODULE_DBG_APP05            0x0020U
+#define MODULE_DBG_TIMER            0x0020U
 #define MODULE_DBG_APP06            0x0040U
 #define MODULE_DBG_APP07            0x0080U
 #define MODULE_DBG_APP08            0x0100U
@@ -81,6 +81,10 @@ enum{
 #define vDBG_SDKCb(level,_fmt_,...)\
         do{if((g_debug_level>=level) && ( (g_debug_module) & MODULE_DBG_SDKCb04 )){\
 			printf("< SDK >[%d]%s() "_fmt_"\n\r",__LINE__,__FUNCTION__,##__VA_ARGS__);}}while(0)
+        
+#define vDBG_TIMER(level,_fmt_,...)\
+        do{if((g_debug_level>=level) && ( (g_debug_module) & MODULE_DBG_TIMER )){\
+            printf("< TIMER >[%d]%s() "_fmt_"\n\r",__LINE__,__FUNCTION__,##__VA_ARGS__);}}while(0)
         
 
 #ifdef __cplusplus

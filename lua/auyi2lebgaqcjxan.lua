@@ -1,5 +1,5 @@
 --[[
-    Modbus PM2.5/10
+    Modbus 二氧化碳
 ]]--
 local math=require("math")
 

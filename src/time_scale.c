@@ -7,6 +7,8 @@
 #include "lauxlib.h"
 #include "lua_modbus.h"
 #include "random-test-server.h"
+#include "string.h"
+
 
 
 
@@ -27,7 +29,7 @@ static int timeScaleList_add(TIMESCALE_PAYLOAD_T*node)
     }
     p->content = node;
     pthread_mutex_lock(&mutex_timescale);
-    vDBG_INFO("p=%08x",p);
+    vDBG_TIMER(DBG_MSGDUMP,"p=%08x",p);
     if(timeScaleDoubleList==NULL){
         timeScaleDoubleList = p;
         timeScaleDoubleList->next = NULL;
@@ -75,7 +77,7 @@ int timescale_create(uint32 timeout,void *cb_param,TIMESCALE_MODE_T mode,timerfu
     p->timerId = seconds;
     p->timeout = timeout+seconds;
     p->Reloads = timeout;
-    vDBG_INFO("seconds = %lld,%lld,&p=%08x,p->cb=%08x",p->timeout,seconds,p,p->cb);
+    vDBG_TIMER(DBG_MSGDUMP,"seconds = %lld,%lld,&p=%08x,p->cb=%08x",p->timeout,seconds,p,p->cb);
     timeScaleList_add(p);
     return 0;
 }
@@ -85,7 +87,7 @@ void * timescale_task_loop(void*args){
 
     for(;;){
         seconds = time(NULL);
-        vDBG_INFO("timestamp:%lld",seconds);
+        vDBG_TIMER(DBG_MSGDUMP,"timestamp:%lld",seconds);
         TimeScaleListElement_t* pN = timeScaleDoubleList;
         TimeScaleListElement_t* pNode = NULL;
         sleep(1);
@@ -95,7 +97,7 @@ void * timescale_task_loop(void*args){
         }
         pthread_mutex_lock(&mutex_timescale);
         do{
-            vDBG_INFO("pN->content->timeout:%lld,pN=%08x,pN->content=%08x",pN->content->timeout,pN,pN->content);
+            vDBG_TIMER(DBG_MSGDUMP,"pN->content->timeout:%lld,pN=%08x,pN->content=%08x",pN->content->timeout,pN,pN->content);
             if(seconds >= pN->content->timeout){
                 if(pN->content->cb){
                     (pN->content->cb)(pN->content->cb_param);
@@ -104,17 +106,13 @@ void * timescale_task_loop(void*args){
                 }
                 
                 if(pN->content->mode == TIMER_SINGLE){
-                   vDBG_ERR("1111");
                    if((pN->previous) && (pN->next)){
-                       vDBG_ERR("5555");
                        pN->previous->next = pN->next;
                        pN->next->previous = pN->previous;
                    }else if((pN->previous ==NULL)&& (pN->next!=NULL)){
                         pN->next->previous =NULL;
                         timeScaleDoubleList = pN->next;
-                        vDBG_ERR("6666");
                    }else if((pN->previous !=NULL)&& (pN->next==NULL)){
-                        vDBG_ERR("8888");
                         pN->previous->next=NULL;
                    }else if((pN->previous ==NULL)&& (pN->next==NULL)){
                         timeScaleDoubleList=NULL;
@@ -126,17 +124,13 @@ void * timescale_task_loop(void*args){
                    free(pN);
                    pN = pNode;
                 }else{
-                  vDBG_ERR("2222");
                   pN->content->timeout = pN->content->Reloads + seconds;
                   pN = pN->next;
                 }
             }else{
                 pN = pN->next;
-                vDBG_ERR("7777");
             }
-            vDBG_ERR("4444");
         }while(pN!=NULL);
-        vDBG_ERR("3333");
         pthread_mutex_unlock(&mutex_timescale);
         
     }
@@ -237,26 +231,41 @@ static int readData(lua_State* L){
 param1:devid
 param2:dp
 param3:dp count
+param4:lua table index
 */
 int send_report(lua_State* L){
     int ret;
     int n = lua_gettop(L);
     vDBG_INFO("stack param count=%d",n);
+    int dp_idx=lua_tointeger(L, -1);
+    
+    lua_pushvalue(L,-2);
     int dp_cnt=lua_tointeger(L, -1);
-    lua_pushvalue(L,-3);
-    const char *devid=lua_tostring(L,-1);
     lua_pop(L,1);
-    vDBG_APP(DBG_DEBUG,"dp_cnt=%d,devid=%s",dp_cnt,devid);
 
+    lua_pushvalue(L,-4);
+    char devid[128]={0};
+    strcpy((char *)&devid,lua_tostring(L,-1));
+    lua_pop(L,1);
+    
+    vDBG_APP(DBG_DEBUG,"dp_cnt=%d,devid=%s,dp_idx=%d",dp_cnt,devid,dp_idx);
+    if(dp_cnt<=0){
+        lua_pushinteger(L,-1);
+        return 1;
+    }
     printf("stack -2 type=%s\r\n",lua_typename(L, lua_type(L, -2)));
     TY_OBJ_DP_S*dp_send=(TY_OBJ_DP_S*)malloc(dp_cnt*sizeof(TY_OBJ_DP_S));
     if(dp_send==NULL){
         lua_pushinteger(L,-1);
         return 1;
     }
-    lua_pushvalue(L,-2);//把dp table放到stack top
+    lua_pushvalue(L,-3);//把dp table放到stack top
     for(int i=0;i<dp_cnt;i++){
-        lua_pushinteger(L,i+1);//lua array start index is 1
+        if(dp_cnt==1){
+            lua_pushinteger(L,dp_idx);//lua array start index is 1            
+        }else{
+            lua_pushinteger(L,i+1);//lua array start index is 1
+        }
         lua_gettable(L,-2);//第一个嵌套table放到stack top
 
         lua_pushstring(L,"dpid");
@@ -349,7 +358,7 @@ int timer_60s_cb(void*param)
     
     //4. 运行脚本
     char path[512]={0};
-    sprintf(path,"../../%s.lua",n->pid);
+    sprintf(path,"../../lua/%s.lua",n->pid);
     int error=luaL_dofile(L, path);
     if(error) {
         vDBG_ERR("Error: %s", lua_tostring(L,-1));
@@ -380,81 +389,3 @@ int timer_60s_cb(void*param)
     
     return 0;
 }
-
-static int mytest(lua_State *L) {
-  //获取上值
-  int upv = (int)lua_tonumber(L, lua_upvalueindex(1));
-  printf("get upvalue = %d\n", upv);
-  //修改第一个upvalue的值
-  upv += 5;
-  lua_pushinteger(L, upv);
-  lua_replace(L, lua_upvalueindex(1));
- 
-  //获取一般参数
-  printf("get general param=%d\n", (int)lua_tonumber(L,1));
- 
-  return 0;
-}
-
-int closure_test(void*param)
-{
-    int ret;
-    TY_OBJ_DP_S *pSource,*pTarget;
-    //1.创建一个state
-    lua_State *L = luaL_newstate();
-    if (L == NULL)
-    {
-        vDBG_ERR("New state fail");
-        return -1;
-    }
-    luaL_openlibs(L);
-
-    //设置Cclosure函数的上值
-    lua_pushinteger(L,10);
-    lua_pushinteger(L,11);
-    lua_pushcclosure(L,mytest,2);
-    lua_setglobal(L,"upvalue_test");
-
-    //2. 运行脚本
-    int error=luaL_dofile(L, "../../test_closure.lua");
-    if(error) {
-        vDBG_ERR("Error: %s", lua_tostring(L,-1));
-        return 1;
-    }
-
-    //4.获得lua函数名并执行
-    //获取fclosure上值的名称(临时值, 不带env)
-    lua_getglobal(L, "l_counter");
-    const char *name = lua_getupvalue(L, -1, 1);
-    printf("%s\n", name);
- 
-    //设置fclosure上值
-    lua_getglobal(L, "l_counter");
-    lua_pushinteger(L,1000);
-    name = lua_setupvalue(L, -2, 1);
-    printf("%s\n", name);
- 
-    lua_getglobal(L,"ltest");
-    lua_pcall(L,0,0,0);
-    lua_getglobal(L,"ltest");
-    lua_pcall(L,0,0,0);
-
-    //获取fclosure的上值（带env）
-    lua_getglobal(L, "g_counter");
-    lua_getupvalue(L, -1, 1);
-
-    //通过settable重新设置env中对应的值
-    lua_pushstring(L, "gloval_upvalue");
-    lua_pushinteger(L,10000);
-    lua_settable(L,-3);
-
-    lua_pushstring(L, "gloval_upvalue1");
-    lua_pushinteger(L,20000);
-    lua_settable(L,-3);
-
-    lua_getglobal(L,"gtest");
-    lua_pcall(L,0,0,0);
-    lua_close(L);
-    return 0;
-}
-

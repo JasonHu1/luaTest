@@ -46,7 +46,7 @@ function report_dp(source,target,c)
     dp[2]["value"]= math.floor(nArray[1]/10)
 
 
-    local ret=send_report(target,dp,attribute.cnt)
+    local ret=send_report(target,dp,attribute.cnt,0)
     if (ret == 0)then
         print("lua report ok")
     else

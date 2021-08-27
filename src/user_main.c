@@ -278,8 +278,6 @@ int main(int argc, char **argv)
         .raw   = __dp_cmd_raw,
         .query = __dp_cmd_query
     };
-
-    message_encode();
     
     char cfgfilePath[512]={0};
     vDBG_INFO("argc=%d",argc);
@@ -376,8 +374,6 @@ int main(int argc, char **argv)
             exit(-1);
         }
 
-        closure_test(NULL);
-
         start_slave_timeScale();
         
         mb_mapping = modbus_mapping_new_start_address(
@@ -429,9 +425,11 @@ int main(int argc, char **argv)
                 tsock= tsock->next;
             }
             if ((nfds = epoll_wait(epollfd, readyEvents, MAX_EVENTS, EPOLL_TIMEOUT_MS)) == -1) {
-                perror("epoll_wait");
-                close(epollfd);
-                exit(1);
+                if(errno!=EINTR){
+                    perror("epoll_wait");
+                    close(epollfd);
+                    exit(1);
+                }
             }
             vDBG_MODULE1(DBG_MSGDUMP,"nfds=%d",nfds);
             if(nfds){
