@@ -22,9 +22,6 @@ local ENUM_TYPE={
 function report_dp(source,target,c)
     print("type(source)..",type(source))
     print("type(c)..",type(c))
-
-    print("c.dpid..",(c.dpid))
-    print("c.type..",c.type)
     
     print("slaveAddr..",source)
     attribute.slave = source

@@ -32,26 +32,31 @@
         {
             "channel":1,
             "slave":1,
-            "interval":100,
-            "pid":"ymig1ngqabhkuvxj"
-        },
-        {
-            "channel":1,
-            "slave":22,
-            "interval":120,
-            "pid":"xad1xwle4mhm2nzs"
+            "interval":10,
+            "pid":"ymig1ngqabhkuvxj",
+            "nick":"temp.humi"
         },
         {
             "channel":1,
             "slave":3,
-            "interval":210,
-            "pid":"auyi2lebgaqcjxan"
+            "interval":16,
+            "pid":"xad1xwle4mhm2nzs",
+            "nick":"CO"
+
+        },
+        {
+            "channel":1,
+            "slave":4,
+            "interval":2100000,
+            "pid":"auyi2lebgaqcjxan",
+            "nick":"CO2"
         },
         {
             "channel":1,
             "slave":2,
-            "interval":10,
-            "pid":"thxdfws90hlg66tz"
+            "interval":14,
+            "pid":"thxdfws90hlg66tz",
+            "nick":"PM2.5"
         }
     ]
 }
