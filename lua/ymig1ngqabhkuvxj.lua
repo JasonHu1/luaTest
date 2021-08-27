@@ -28,6 +28,10 @@ function report_dp(source,target,c)
     local nArray = modbus_read_registers(attribute)
 
     print("type(nArray)..",type(nArray))
+    if (next(nArray) ==nil) then
+        print("modbus read occure error")
+        return
+    end
     print("nArray=",nArray)
     print("length=",#nArray)
     for n=0,#nArray,1 do

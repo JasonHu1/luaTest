@@ -138,7 +138,7 @@ int __modbus_read_registers(lua_State* L){
     int slave=lua_tointeger(L, -1);
     lua_pop(L, 1);
 
-    vdbg_printf("fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
+    vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
 
     uint16 rdData[32]={0};
 
@@ -146,21 +146,21 @@ int __modbus_read_registers(lua_State* L){
         vDBG_WARN("static apply memery max is 32 Bytes,BUT cnt=%d",cnt);
         return 0;
     }
+    lua_newtable(L);
+    
     //01 (0x01) Read Coils
     modbus_set_slave(ctx[FD_RANK_SERIAL_START], slave);
     if(ret = modbus_read_registers(ctx[FD_RANK_SERIAL_START],addr, cnt,rdData)!= -1){
-        vDBG_INFO("modbus_read_bits ok");
+        //struct read data into lua table that return to lua
+        for(int i=0;i<cnt;i++){
+            lua_pushinteger(L,i);//key
+            lua_pushinteger(L,rdData[i]);
+            lua_settable(L,-3);
+        }
     }else{
         vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
     }
     
-    //struct read data into lua table that return to lua
-    lua_newtable(L);
-    for(int i=0;i<cnt;i++){
-        lua_pushinteger(L,i);//key
-        lua_pushinteger(L,rdData[i]);
-        lua_settable(L,-3);
-    }
 
     return 1;
 
@@ -176,3 +176,97 @@ int __modbus_report_slave_id(lua_State* L){}
 int __modbus_mask_write_register(lua_State* L){}
 int __modbus_write_and_read_registers(lua_State* L)
 {}
+
+/*
+param1:devid
+param2:dp
+param3:dp count
+param4:lua table index
+*/
+int send_report(lua_State* L){
+    int ret;
+    int n = lua_gettop(L);
+    vDBG_INFO("stack param count=%d",n);
+    int dp_idx=lua_tointeger(L, -1);
+    
+    lua_pushvalue(L,-2);
+    int dp_cnt=lua_tointeger(L, -1);
+    lua_pop(L,1);
+
+    lua_pushvalue(L,-4);
+    char devid[128]={0};
+    strcpy((char *)&devid,lua_tostring(L,-1));
+    lua_pop(L,1);
+    
+    vDBG_APP(DBG_DEBUG,"dp_cnt=%d,devid=%s,dp_idx=%d",dp_cnt,devid,dp_idx);
+    if(dp_cnt<=0){
+        lua_pushinteger(L,-1);
+        return 1;
+    }
+    if(LUA_TTABLE!=lua_type(L, -3)){
+        vDBG_ERR("stack -2 NOT TABLE !!! type=%s\r\n",lua_typename(L, lua_type(L, -3)));
+        lua_pushinteger(L,-1);
+        return 1;
+    }
+    TY_OBJ_DP_S*dp_send=(TY_OBJ_DP_S*)malloc(dp_cnt*sizeof(TY_OBJ_DP_S));
+    if(dp_send==NULL){
+        lua_pushinteger(L,-1);
+        return 1;
+    }
+    lua_pushvalue(L,-3);//把dp table放到stack top
+    for(int i=0;i<dp_cnt;i++){
+        if(dp_cnt==1){
+            lua_pushinteger(L,dp_idx);//lua array start index is 1            
+        }else{
+            lua_pushinteger(L,i+1);//lua array start index is 1
+        }
+        lua_gettable(L,-2);//第一个嵌套table放到stack top
+
+        lua_pushstring(L,"dpid");
+        lua_gettable(L, -2);
+        dp_send[i].dpid=lua_tointeger(L,-1);
+        lua_pop(L, 1);
+        vDBG_APP(DBG_DEBUG,"dp_send[%d].dpid=%d",i,dp_send[i].dpid);
+
+        lua_pushstring(L,"type");
+        lua_gettable(L, -2);
+        dp_send[i].type=lua_tointeger(L,-1);
+        lua_pop(L, 1);
+        vDBG_APP(DBG_DEBUG,"dp_send[%d].type=%d",i,dp_send[i].type);
+
+        lua_pushstring(L,"value");
+        lua_gettable(L, -2);
+        switch(dp_send[i].type){
+            case PROP_BOOL:
+                dp_send[i].value.dp_bool=lua_tointeger(L,-1);
+                vDBG_APP(DBG_DEBUG,"dp_send[%d].value.dp_bool=%d",i,dp_send[i].value.dp_bool);
+                break;
+            case PROP_VALUE:
+                dp_send[i].value.dp_value=lua_tointeger(L,-1);
+                vDBG_APP(DBG_DEBUG,"dp_send[%d].value.dp_value=%d",i,dp_send[i].value.dp_value);
+                break;
+            case PROP_STR:
+                dp_send[i].value.dp_str=lua_tostring(L,-1);
+                vDBG_APP(DBG_DEBUG,"dp_send[%d].value.dp_str=%s",i,dp_send[i].value.dp_str);
+                break;
+            case PROP_ENUM:
+                dp_send[i].value.dp_enum=lua_tointeger(L,-1);
+                vDBG_APP(DBG_DEBUG,"dp_send[%d].value.dp_enum=%d",i,dp_send[i].value.dp_enum);
+                break;
+            case PROP_BITMAP:
+                dp_send[i].value.dp_bitmap=lua_tointeger(L,-1);
+                vDBG_APP(DBG_DEBUG,"dp_send[%d].value.dp_bitmap=%d",i,dp_send[i].value.dp_bitmap);
+                break;
+            default:
+                break;
+        }
+        lua_pop(L, 2);//pop the vale and embed table
+    }
+    if((ret = dev_report_dp_json_async(devid,dp_send, dp_cnt))!=OPRT_OK){
+        vDBG_ERR("ret=0x%04x",ret);
+    }
+    lua_pushinteger(L,ret);
+    free(dp_send);
+    return 1;
+}
+
