@@ -50,7 +50,7 @@ int gTcpClientNm=0;
 int gTcpPiClientNm=0;
 int gIdx=0;
 LocalSocketRecord_t* gpTcpClientList = NULL;
-modbus_t *ctx[MAX_EVENTS];
+//modbus_t *ctx[MAX_EVENTS];
 int isfirst=0;
 
 
@@ -335,6 +335,7 @@ int main(int argc, char **argv)
         modbus_t *ctx_tcp,*ctx_tcp_pi;
         modbus_mapping_t *mb_mapping;
         int rc;
+        char serialNm;
         int i,j;
         int use_backend;
         uint8_t *query;
@@ -345,27 +346,26 @@ int main(int argc, char **argv)
         query = malloc(MODBUS_TCP_MAX_ADU_LENGTH);
 
         /**********uart setting***********/
-        UARTCFG_T *uartCfg=NULL;
-        gSerialNm = user_get_uartConfigure(cfg_str,&uartCfg);
-        if((0==gSerialNm) || (uartCfg == NULL)){
+        COMM_INFO_T *uartCfg = user_get_uartConfigure(&serialNm);
+        if((0==serialNm) || (uartCfg == NULL)){
             vDBG_ERR("uart config information error");
             exit(-1);
         }
-        for(i=0;i<gSerialNm;i++){
-            vDBG_INFO("uartCfg[0].parity =%d,%c",uartCfg[i].parity,uartCfg[i].parity);
-            if(BUS_PROTOCOL_MODBUS==uartCfg[i].busProto){//modbus
-                ctx[FD_RANK_SERIAL_START+i] = modbus_new_rtu(uartCfg[i].devName,uartCfg[i].baud, uartCfg[i].parity, uartCfg[i].dataBit, uartCfg[i].stopBit);
-                if(rc = modbus_connect(ctx[FD_RANK_SERIAL_START+i])==-1){
-                    vDBG_ERR("ctx[%d] connect failed !!!fd=%d",FD_RANK_SERIAL_START+i,modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
+        for(i=0;i<serialNm;i++){
+            vDBG_INFO("uartCfg[0].parity =%d,%c",uartCfg[i].pCfg->parity,uartCfg[i].pCfg->parity);
+            if(BUS_PROTOCOL_MODBUS==uartCfg[i].pCfg->busProto){//modbus
+                uartCfg[i].pConnCxt = modbus_new_rtu(uartCfg[i].pCfg->devName,uartCfg[i].pCfg->baud, uartCfg[i].pCfg->parity, uartCfg[i].pCfg->dataBit, uartCfg[i].pCfg->stopBit);
+                if(rc = modbus_connect(uartCfg[i].pConnCxt)==-1){
+                    vDBG_ERR("ctx[%d] connect failed !!!fd=%d",FD_RANK_SERIAL_START+i,modbus_get_socket(uartCfg[i].pConnCxt));
                     exit(-1);
                 }
-                modbus_set_debug(ctx[FD_RANK_SERIAL_START+i], TRUE);
-                vDBG_INFO("connect fd=%d success",modbus_get_socket(ctx[FD_RANK_SERIAL_START+i]));
+                modbus_set_debug(uartCfg[i].pConnCxt, TRUE);
+                vDBG_INFO("connect fd=%d success",modbus_get_socket(uartCfg[i].pConnCxt));
                 if(pthread_create(&t,NULL,app_main_loop,NULL)!=0){
                     vDBG_ERR("pthread create failed");
                     exit(-1);
                 }
-            }else if(BUS_PROTOCOL_KNX==uartCfg[i].busProto){
+            }else if(BUS_PROTOCOL_KNX==uartCfg[i].pCfg->busProto){
             }else{
             }
         }
@@ -385,7 +385,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to allocate the mapping: %s\n",
                     modbus_strerror(errno));
             for(i=0;i<COUNT_NUM;i++){
-                modbus_free(ctx[i]);
+                modbus_free(uartCfg[i].pConnCxt);
             }
             return -1;
         }
@@ -435,20 +435,6 @@ int main(int argc, char **argv)
             if(nfds){
                 for (int n = 0; n < nfds; n++) {
                     vDBG_INFO("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
-                    for(j=0;j<gSerialNm;j++){
-                        if (readyEvents[n].data.fd == modbus_get_socket(ctx[FD_RANK_SERIAL_START+j])) {//ttyUSB0
-                            rc = modbus_receive(ctx[FD_RANK_SERIAL_START+j], query);
-                            if (rc > 0) {
-                                /* rc is the query size */
-                                modbus_reply(ctx[FD_RANK_SERIAL_START+j], query, rc, mb_mapping);
-                            } else if (rc == -1) {
-                                /* Connection closed by the client or error */
-                               vDBG_ERR("modbus_receive failed !!!");
-                            }
-                        }
-                        continue;
-                    }
-                    vDBG_INFO("222");
                     if (readyEvents[n].data.fd == gpTcpClientList->socketFd) {//new connect client socket fd
                         vDBG_INFO("000");
                         addTcpClientListRec(modbus_new_tcp(NULL, 1502));
@@ -488,8 +474,8 @@ int main(int argc, char **argv)
         close(s_tcp);
         close(s_tcp_pi);
         for(i=0;i<COUNT_NUM;i++){
-            modbus_close(ctx[i]);
-            modbus_free(ctx[i]);
+            modbus_close(uartCfg[i].pConnCxt);
+            modbus_free(uartCfg[i].pConnCxt);
         }
         return 0;
     }

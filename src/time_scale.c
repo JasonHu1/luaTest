@@ -177,57 +177,6 @@ void printLuaStack(lua_State *L){
 
 }
 
-static int readData(lua_State* L){
-    int ret;
-    int n = lua_gettop(L);
-    vDBG_INFO("stack param count=%d",n);
-    if(!lua_istable(L,-1)){
-        vDBG_ERR("stack top is not table");
-        return -1;
-    }
-    lua_pushstring(L,"fc");
-    lua_gettable(L,-2);
-    int fc=lua_tointeger(L, -1);
-    lua_pop(L, 1);
-
-    lua_pushstring(L,"addr");
-    lua_gettable(L,-2);
-    int addr=lua_tointeger(L, -1);
-    lua_pop(L, 1);
-
-    lua_pushstring(L,"cnt");
-    lua_gettable(L,-2);
-    int cnt=lua_tointeger(L, -1);
-    lua_pop(L, 1);
-
-    vdbg_printf("fc=%d,addr=%d,cnt=%d",fc,addr,cnt)    ;
-
-#if 0
-
-    lua_newtable(L);
-    for(int i=6;i>=0;i--){
-        lua_pushinteger(L,i);//key
-        lua_pushinteger(L,buffer1[i]);
-        lua_settable(L,-3);
-    }
-
-    return 1;
-#else
-    //01 (0x01) Read Coils
-    modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);
-    if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 10,buffer1)!= -1){
-        vDBG_INFO("modbus_read_bits ok1");
-        for(int i=0;i<10;i++){
-            printf("%02x ",buffer1[i]);
-        }
-        printf("\r\n");
-    }else{
-        vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
-    }
-    
-#endif
-}
-
 TY_OBJ_DP_S source={
     .dpid=1,
     .type=2,
@@ -254,7 +203,6 @@ int timer_60s_cb(void*param)
     //2.加载lua库
     luaL_openlibs(L);
     //3.声明C 扩展函数
-    lua_register(L, "readData", readData);
     lua_register(L, "send_report",send_report);
     lua_register(L, "modbus_read_bits",__modbus_read_bits);
     lua_register(L, "modbus_read_input_bits",__modbus_read_input_bits);
@@ -286,6 +234,7 @@ int timer_60s_cb(void*param)
     /*6.参数入栈*/
     lua_pushinteger(L, n->slave);   // 压入第一个参数  
     lua_pushstring(L, deviceId);          // 压入第二个参数
+    lua_pushinteger(L, n->channel);
     lua_pushlightuserdata(L,&source);
     //7.执行指定lua函数
     if((ret = lua_pcall(L, 3, 0, 0))!=LUA_OK)//有2个入参数，0个返回值

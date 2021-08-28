@@ -2,6 +2,7 @@
 #define __DEBUG_H_
 #include "string.h"
 #include "uni_log.h"
+#include "app_defs_types.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
