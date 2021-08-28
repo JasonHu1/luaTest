@@ -1,6 +1,6 @@
 #include "hal_comm.h"
 
-COMM_INFO_T *gConnArray=NULL;
+COMM_INFO_T gConnArray[10]={0};
 int gSerialNm;
 
 COMM_INFO_T* user_get_uartConfigure(CHAR_T *cnt){
@@ -8,7 +8,7 @@ COMM_INFO_T* user_get_uartConfigure(CHAR_T *cnt){
     return gConnArray;
 }
 
-COMM_INFO_T* user_get_conn_context_byChannel(CHAR_T *channel){
+COMM_INFO_T* user_get_conn_context_byChannel(CHAR_T channel){
     for(int i=0;i<gSerialNm;i++){
         if(gConnArray[i].pCfg->channel == channel){
             return &gConnArray[i];
@@ -99,12 +99,14 @@ int user_save_uartConfigure(IN CONST CHAR_T *str_cfg)
     
     gSerialNm = num;
 
-    if((gConnArray = (COMM_INFO_T*)malloc(sizeof(COMM_INFO_T)*num))==NULL){
-        vDBG_ERR("malloc failed  error");
-        num = 0;
-        goto exit;
+    for(int i=0;i<gSerialNm;i++){
+        if((gConnArray[i].pCfg = (UARTCFG_T*)malloc(sizeof(UARTCFG_T)))==NULL){
+            vDBG_ERR("malloc failed  error");
+            num = 0;
+            goto exit;
+        }
+        gConnArray[i].pConnCxt = NULL;
     }
-    memset(gConnArray,0,sizeof(COMM_INFO_T)*num);
     pUartCfg = gConnArray;
     for(int i=0;i<num;i++){
         ty_cJSON*obj = ty_cJSON_GetArrayItem(pObjUartArray,i);

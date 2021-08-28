@@ -314,6 +314,9 @@ int main(int argc, char **argv)
         return op_ret;
     }
 
+    /*get uart info */
+    user_save_uartConfigure(cfg_str);
+
     op_ret = user_svc_init((VOID *)&gw_cbs);
     if (op_ret != OPRT_OK) {
         PR_ERR("user_svc_init err: %d", op_ret);

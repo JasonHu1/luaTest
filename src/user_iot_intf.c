@@ -220,8 +220,6 @@ OPERATE_RET user_iot_init(IN CONST CHAR_T *str_cfg)
         prod_info.ap_ssid =  js_ssid->valuestring;
         prod_info.ap_passwd = js_password->valuestring;
     }
-    /*get uart info */
-    user_save_uartConfigure(str_cfg);
             
     op_ret = tuya_iot_set_wf_gw_prod_info(&prod_info);
 #else

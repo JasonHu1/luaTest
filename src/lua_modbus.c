@@ -38,7 +38,7 @@ int __modbus_read_bits(lua_State* L){
     lua_pop(L, 1);
 
     vdbg_printf("fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -105,7 +105,7 @@ int __modbus_read_input_bits(lua_State* L){
     lua_pop(L, 1);
 
     vdbg_printf("fc=%d,addr=%d,cnt=%d",fc,addr,cnt)    ;
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -175,7 +175,7 @@ int __modbus_read_registers(lua_State* L){
     }
     lua_newtable(L);
 
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -239,7 +239,7 @@ int __modbus_read_input_registers(lua_State* L){
         return 0;
     }
 
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -308,7 +308,7 @@ int __modbus_write_bit(lua_State* L){
 
     vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
 
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -372,7 +372,7 @@ int __modbus_write_register(lua_State* L){
         vDBG_WARN("static apply memery max is 32 Bytes,BUT cnt=%d",cnt);
         return 0;
     }
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -432,7 +432,7 @@ int __modbus_write_bits(lua_State* L){
         vDBG_WARN("static apply memery max is 32 Bytes,BUT cnt=%d",cnt);
         return 0;
     }
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -485,7 +485,7 @@ int __modbus_write_registers(lua_State* L){
     lua_pop(L, 1);
 
     vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -546,7 +546,7 @@ int __modbus_report_slave_id(lua_State* L){
     lua_pop(L, 1);
 
     vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -608,7 +608,7 @@ int __modbus_mask_write_register(lua_State* L){
     lua_pop(L, 1);
 
     vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -670,7 +670,7 @@ int __modbus_write_and_read_registers(lua_State* L)
     lua_pop(L, 1);
 
     vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
-    COMM_INFO_T*conn = user_get_uartConfigure(channel);
+    COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
@@ -767,7 +767,7 @@ int send_report(lua_State* L){
                 vDBG_MODBUS(DBG_DEBUG,"dp_send[%d].value.dp_value=%d",i,dp_send[i].value.dp_value);
                 break;
             case PROP_STR:
-                dp_send[i].value.dp_str=lua_tostring(L,-1);
+                dp_send[i].value.dp_str=(char*)lua_tostring(L,-1);
                 vDBG_MODBUS(DBG_DEBUG,"dp_send[%d].value.dp_str=%s",i,dp_send[i].value.dp_str);
                 break;
             case PROP_ENUM:
