@@ -6,11 +6,15 @@
 #include "random-test-server.h"
 #include "tuya_gw_subdev_api.h"
 #include "tuya_gw_com_api.h"
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+#include "lua_modbus.h"
+
 
 int isBind=0;
+QUEUE_MANAGER_T *queue_dp_cmd=NULL;
 
-//dev_report_dp_stat_sync
-//dev_report_dp_json_async
 
 int report_status(char status)
 {
@@ -107,42 +111,240 @@ int start_slave_timeScale(void){
     return 0;
 
 }
-void* app_main_loop(void*args){
-    OPERATE_RET ret=OPRT_OK;
-    int status;
-    vDBG_INFO("app_main_loop pthread start");
-    for(;;){
-        //timescale_create(6, NULL, TIMER_SINGLE, timer_60s_cb);
-        sleep(5);
-        #if 0
-//        if(!isBind){
-//            vDBG_INFO("subdev is Not bind success!!!");
-//            continue;
-//        }
 
-        //01 (0x01) Read Coils
+
+int user_save_slaveList(IN CONST CHAR_T *str_cfg)
+{
+    int n,ret;
+    int num ;
+    SLAVEINFOLIST_T *node=NULL;
+    ty_cJSON *pObjCfg=NULL,*pObjSlaveArray=NULL;
+    pObjCfg = ty_cJSON_Parse(str_cfg);
+    if (pObjCfg == NULL) {
+        PR_ERR("param cfg is invalid");
+        return 0;       
+    }
+
+    pObjSlaveArray = ty_cJSON_GetObjectItem(pObjCfg, "slaves");
+    if (pObjSlaveArray == NULL  || pObjSlaveArray->type != ty_cJSON_Array) {
+        PR_ERR("param cfg is invalid");
+        ret = -1;
+        goto exit;
+    }
+
+    num = ty_cJSON_GetArraySize(pObjSlaveArray);
+    if(num==0){
+        vDBG_ERR("config.json error");
+        ret = -1;
+        goto exit;
+    }
+    for(n=0;n<num;n++){
+        if((node = (SLAVEINFOLIST_T*)malloc(sizeof(SLAVEINFOLIST_T)))==NULL){
+            vDBG_ERR("malloc failed  error");
+            ret = -1;
+            goto exit;
+        }
+        ty_cJSON*obj = ty_cJSON_GetArrayItem(pObjSlaveArray,n);
         
-        modbus_set_slave(ctx[FD_RANK_SERIAL_START], SERVER_ID);
-        if(ret = modbus_read_bits(ctx[FD_RANK_SERIAL_START],0, 10,buffer)!= -1){
-            vDBG_INFO("modbus_read_bits ok1");
-            report_status(status);
-            status++;
-            for(int i=0;i<10;i++){
-                printf("%02x ",buffer[i]);
+        ty_cJSON*objDid=ty_cJSON_GetObjectItem(obj, "did");
+        if(objDid){
+            strcpy(node->did,objDid->valuestring) ;
+        }else{
+            vDBG_ERR("must set device slave address");
+        }
+        
+        ty_cJSON*objPid = ty_cJSON_GetObjectItem(obj,"pid");
+        if(objPid){
+            strcpy(node->pid,objPid->valuestring) ;
+        }
+
+        ty_cJSON*objDevnm=ty_cJSON_GetObjectItem(obj, "nick");
+        if(objDevnm){
+            strcpy(node->devName,objDevnm->valuestring) ;
+        }
+    
+        ty_cJSON*objChannel=ty_cJSON_GetObjectItem(obj, "channel");
+        if(objChannel){
+            node->channel = objChannel->valueint;
+        }else{
+            vDBG_ERR("must set device channel");
+        }
+        
+        ty_cJSON*objInterval=ty_cJSON_GetObjectItem(obj, "interval");
+        if(objInterval){
+            node->rptInterval = objInterval->valueint;
+        }else{
+            vDBG_ERR("must set device report interval");
+        }
+        
+        ty_cJSON*objAddress=ty_cJSON_GetObjectItem(obj, "slave");
+        if(objAddress){
+            node->slave = objAddress->valueint;
+        }else{
+            vDBG_ERR("must set device slave address");
+        }
+        if(NULL==gSlaveDeviceInfoList){
+            gSlaveDeviceInfoList = node;
+            node->next = NULL;
+            node->previous = NULL;
+        }else{
+            node->next = gSlaveDeviceInfoList;
+            node->previous = NULL;
+            gSlaveDeviceInfoList = node;
+        }
+    }
+    ret=0;
+exit:
+    ty_cJSON_Delete(pObjCfg);
+    return ret;
+}
+
+SLAVEINFOLIST_T* user_find_slaveNode_byDid(char*did){
+    SLAVEINFOLIST_T*p=NULL;
+    do{
+        if(gSlaveDeviceInfoList==NULL){
+            vDBG_DEBUG("error");
+            return NULL;
+        }
+        p=gSlaveDeviceInfoList;
+        if(strcmp(p->did,did)==0){
+            return p;
+        }
+        p=p->next;
+    }while(p!=NULL);
+    return NULL;
+}
+
+void* app_main_loop(void*args){
+    OPERATE_RET ret=OPRT_COM_ERROR;
+    int status;
+    TY_RECV_OBJ_DP_S*content=NULL,*p=NULL;
+    DEV_DESC_IF_S*dev_if=NULL;
+    SLAVEINFOLIST_T*sDevice=NULL;
+    vDBG_INFO("app_main_loop pthread start");
+    if((queue_dp_cmd = queue_init())==NULL){
+        vDBG_ERR("error");
+        exit(-1);
+    }
+    for(;;){
+        sleep(1);
+        do{
+            ret = queue_popfront(queue_dp_cmd,(void**)&content);
+            if(ret!=0){
+                break;
             }
-            printf("\r\n");
-        }else{
-            vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
-        }
-        //03 (0x03) Read Holding Registers
-        uint16 batteryVol;
-        if(ret = modbus_read_registers(ctx[FD_RANK_SERIAL_START],0, 1,&batteryVol)!= -1){
-            vDBG_INFO("modbus_read_registers batteryVol=%d",batteryVol);
-            report_batteryVal(batteryVol);
-        }else{
-            vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
-        }
-        #endif
-        
+            PR_DEBUG("content=%08x",content);
+            p = content;
+            PR_DEBUG("p=%08x",p);
+
+
+            PR_DEBUG("p=%08x",p);
+            if(p->cid){
+                PR_DEBUG("p->cid=%08x,%s",p->cid,p->cid);
+            }
+
+            PR_DEBUG("p->dps=%08x",p->dps);
+
+            PR_DEBUG("p->dps[0].dpid=%d,type=%d",p->dps[0].dpid,p->dps[0].type);
+            
+            PR_DEBUG("p->dps[0].dpid.val=%d",p->dps[0].value);
+
+            
+            vDBG_APP(DBG_DEBUG,"33333,p->cid=%s",p->cid);
+            //拿到pid
+            dev_if = tuya_iot_get_dev_if(p->cid);
+            if (dev_if == NULL) {
+                vDBG_ERR("error");
+                break;
+            }
+            vDBG_APP(DBG_DEBUG,"dev_if->product_key=%s,dev_if->id=%s",dev_if->product_key,dev_if->id);
+            sDevice = user_find_slaveNode_byDid(dev_if->id);
+            if(sDevice==NULL){
+                vDBG_ERR("error");
+                break;
+            }
+            //1.创建一个state
+            lua_State *L = luaL_newstate();
+            if (L == NULL)
+            {
+                vDBG_ERR("New state fail");
+                break;
+            }
+            //2.加载lua库
+            luaL_openlibs(L);
+            //3.声明C 扩展函数
+            lua_register(L, "modbus_write_bit",__modbus_write_bit);
+            lua_register(L, "modbus_write_register",__modbus_write_register);
+            lua_register(L, "modbus_write_bits",__modbus_write_bits);
+            lua_register(L, "modbus_write_registers",__modbus_write_bits);
+            lua_register(L, "modbus_report_slave_id",__modbus_report_slave_id);
+            lua_register(L, "modbus_mask_write_register",__modbus_mask_write_register);
+            lua_register(L, "modbus_write_and_read_registers",__modbus_write_and_read_registers);
+            
+            //4. 运行脚本
+            char path[512]={0};
+            sprintf(path,"../../lua/%s.lua",dev_if->product_key);
+            int error=luaL_dofile(L, path);
+            if(error) {
+                vDBG_ERR("Error: %s", lua_tostring(L,-1));
+                break;
+            }
+
+            //5.获得lua函数名并执行
+            lua_getglobal(L,"write_dp");
+
+            char deviceId[64]={0};
+            sprintf(deviceId,"channel_%d_slave_%d",sDevice->channel,sDevice->slave);
+
+            /*6.参数入栈*/
+            lua_pushinteger(L, sDevice->slave);   // 压入第一个参数  
+            lua_pushstring(L, deviceId);          // 压入第二个参数
+            lua_pushinteger(L, sDevice->channel);
+            
+            lua_newtable(L);
+            lua_pushinteger(L,1);
+            for(int i=1;i<p->dps_cnt+1;i++){
+                lua_newtable(L);
+                lua_pushstring(L, "dpid");
+                lua_pushinteger(L,p->dps[i-1].dpid);
+                lua_settable(L,-3);
+                lua_pushstring(L, "val");
+                switch (p->dps[i-1].type) {
+                    case PROP_BOOL:
+                        lua_pushinteger(L,p->dps[i-1].value.dp_bool);
+                        break;
+                    case PROP_VALUE:
+                    PR_DEBUG("p->dps[i-1].value.dp_value=%d",p->dps[i-1].value.dp_value);
+                        lua_pushinteger(L,p->dps[i-1].value.dp_value);
+                        break;
+                    case PROP_ENUM:
+                        lua_pushinteger(L,p->dps[i-1].value.dp_enum);
+                        break;
+                    case PROP_STR:
+                        lua_pushstring(L,p->dps[i-1].value.dp_str);
+                        break;
+                }
+                lua_settable(L,-3);
+            }
+            lua_settable(L,-3);
+
+            //7.执行指定lua函数
+            if((ret = lua_pcall(L, 4, 0, 0))!=LUA_OK)//有4个入参数，0个返回值
+            {
+                const char *pErrorMsg = lua_tostring(L, -1);  
+                vDBG_ERR("ret=%d,%s",ret,pErrorMsg);
+                lua_close(L);  
+                break; 
+            }
+
+            /* 清除Lua */    
+            lua_close(L); 
+            for(int i=0;i<p->dps_cnt;i++){
+                if(p->dps[i].type==PROP_STR){
+                    free(p->dps[i].value.dp_str);
+                }
+            }
+            free(p);
+        }while(ret==0);
     }
 }

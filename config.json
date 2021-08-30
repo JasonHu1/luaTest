@@ -14,7 +14,7 @@
     "uart":[
         {
             "proto":"modbus",
-            "dev_nmae":"/dev/ttyUSB1",
+            "dev_nmae":"/dev/ttyUSB2",
             "baud":9600,
             "parity":"none",
             "data_bits":8,
@@ -27,36 +27,41 @@
             "channel":1,
             "slave":11,
             "interval":100,
+            "did":"channel_1_slave_11",
             "pid":"test"
         },
         {
             "channel":1,
             "slave":1,
             "interval":10,
+            "did":"channel_1_slave_1",
             "pid":"ymig1ngqabhkuvxj",
             "nick":"temp.humi"
         },
-        {
-            "channel":1,
-            "slave":3,
-            "interval":16,
-            "pid":"xad1xwle4mhm2nzs",
-            "nick":"CO"
+        {
+            "channel":1,
+            "slave":3,
+            "interval":16,
+            "did":"channel_1_slave_3",
+            "pid":"xad1xwle4mhm2nzs",
+            "nick":"CO"
 
-        },
-        {
-            "channel":1,
-            "slave":4,
-            "interval":2100000,
-            "pid":"auyi2lebgaqcjxan",
-            "nick":"CO2"
-        },
-        {
-            "channel":1,
-            "slave":2,
-            "interval":14,
-            "pid":"thxdfws90hlg66tz",
-            "nick":"PM2.5"
-        }
+        },
+        {
+            "channel":1,
+            "slave":4,
+            "interval":2100000,
+            "did":"channel_1_slave_4",
+            "pid":"auyi2lebgaqcjxan",
+            "nick":"CO2"
+        },
+        {
+            "channel":1,
+            "slave":2,
+            "interval":14,
+            "did":"channel_1_slave_2",
+            "pid":"thxdfws90hlg66tz",
+            "nick":"PM2.5"
+        }
     ]
 }

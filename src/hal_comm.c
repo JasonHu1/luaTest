@@ -145,3 +145,78 @@ exit:
     return num;
 }
 
+
+QUEUE_MANAGER_T* queue_init(void)
+{
+    int res;
+    QUEUE_MANAGER_T*queue=(QUEUE_MANAGER_T*)malloc(sizeof(QUEUE_MANAGER_T));
+    if(queue==NULL){
+        vDBG_ERR("queue malloc failed");
+        return NULL;
+    }
+    res=pthread_mutex_init(&(queue->mutex_queue), NULL);//初始化锁
+    if (res != 0)
+    {
+        perror("rwlock initialization failed");
+        exit(-1);
+    }
+    queue->nb = 0;
+    queue->head = queue->tail = NULL;
+    return queue;
+}
+
+int queue_pushback(QUEUE_MANAGER_T*queue,void*content)
+{
+    if(queue==NULL){
+        vDBG_ERR("queue is null");
+        return -1;
+    }
+    QUEUE_Element_t*element=(QUEUE_Element_t*)malloc(sizeof(QUEUE_Element_t));
+    if(element!=NULL){
+        element->content = content;
+        element->next=NULL;
+    }
+    vDBG_APP(DBG_DEBUG,"element=%08x,content=%08x",element,content);
+
+    pthread_mutex_lock(&queue->mutex_queue);
+    if(queue->head==NULL){
+        queue->head = element;
+    }else{
+        queue->tail->next = element;
+    }
+    ++(queue->nb);
+    
+    pthread_mutex_unlock(&queue->mutex_queue); 
+    return 0;
+}
+
+
+int queue_popfront(QUEUE_MANAGER_T*queue,void**content)
+{
+    QUEUE_Element_t *element=NULL;
+    int ret=-1;
+    if(NULL == queue){
+        vDBG_ERR("queue failed");
+        return ret;
+    }
+    vDBG_APP(DBG_DEBUG,"queue lock");
+    pthread_mutex_lock(&queue->mutex_queue);
+    if(queue->head!=NULL){
+        element = queue->head;
+        *content = queue->head->content;
+        queue->head = queue->head->next;
+
+        vDBG_APP(DBG_DEBUG,"element=%08x,*content=%08x",element,*content);
+        free(element);
+        --(queue->nb);
+        ret =0;
+    }else{
+        goto exit;
+    }
+exit:
+    vDBG_APP(DBG_DEBUG,"queue unlock");
+    pthread_mutex_unlock(&queue->mutex_queue); 
+    return ret;
+}
+
+

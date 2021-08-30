@@ -133,7 +133,7 @@ STATIC VOID __dev_bind_cb(CONST CHAR_T *dev_id, CONST OPERATE_RET result)
         return;
     }
 
-    isBind =1;
+//    isBind =1;
     op_ret = tuya_iot_fresh_dev_hb(dev_id);
     if (op_ret != OPRT_OK) {
         PR_ERR("tuya_iot_fresh_dev_hb err: %d", op_ret);
@@ -145,28 +145,56 @@ STATIC VOID __dev_cmd_obj_cb(CONST TY_RECV_OBJ_DP_S *cmd)
 {
     INT_T i = 0;
     OPERATE_RET op_ret = OPRT_OK;
-
+    DEV_DESC_IF_S *dev_if;
+    TY_RECV_OBJ_DP_S *cmd2=NULL;
     PR_DEBUG("dev cmd obj callback");
-    PR_DEBUG("cmd_tp: %d, dtt_tp: %d, dps_cnt: %u", cmd->cmd_tp, cmd->dtt_tp, cmd->dps_cnt);
 
+    PR_DEBUG("cid = %s,cmd_tp: %d, dtt_tp: %d, dps_cnt: %u",cmd->cid, cmd->cmd_tp, cmd->dtt_tp, cmd->dps_cnt);
+    //deep copy
+    cmd2 = (TY_RECV_OBJ_DP_S*)malloc(sizeof(TY_RECV_OBJ_DP_S) + sizeof(TY_OBJ_DP_S)*cmd->dps_cnt +sizeof(cmd->cid)+1 +sizeof(cmd->mb_id)+1);
+    PR_DEBUG("cmd2=%08x",cmd2);
+    
+    cmd2->cmd_tp = cmd->cmd_tp;
+    cmd2->dtt_tp = cmd->dtt_tp;
+    if(cmd->cid){
+        cmd2->cid = (char*)cmd2 +sizeof(TY_RECV_OBJ_DP_S) + sizeof(TY_OBJ_DP_S)*cmd->dps_cnt;
+        strcpy((char*)(cmd2->cid) , (char*)(cmd->cid));
+    }else{
+        cmd2->cid =NULL;
+    }
+    if(cmd->mb_id){
+        cmd2->mb_id = (char*)cmd2 +sizeof(TY_RECV_OBJ_DP_S) + sizeof(TY_OBJ_DP_S)*cmd->dps_cnt +sizeof(cmd->cid)+1;
+        strcpy((char*)(cmd2->mb_id) , (char*)(cmd->mb_id));
+    }else{
+        cmd2->mb_id=NULL;
+    }
+    
+    cmd2->dps_cnt = cmd->dps_cnt;
+    
     for (i = 0; i < cmd->dps_cnt; i++) {
-        PR_DEBUG("dpid: %d", cmd->dps[i].dpid);
+        memcpy((unsigned char*)&(cmd2->dps[i]), (unsigned char*)&(cmd->dps[i]), sizeof(TY_OBJ_DP_S));
+        
+        PR_DEBUG("dpid: %d,type:%d", cmd->dps[i].dpid,cmd->dps[i].type);
         switch (cmd->dps[i].type) {
         case PROP_BOOL:
-            PR_DEBUG("dp_bool value: %d", cmd->dps[i].value.dp_bool);
+            PR_DEBUG("dp_bool value: %d,%d", cmd->dps[i].value.dp_bool,cmd2->dps[i].value.dp_bool);
             break;
         case PROP_VALUE:
-            PR_DEBUG("dp_value value: %d", cmd->dps[i].value.dp_value);
+            PR_DEBUG("dp_value value: %d,%d", cmd->dps[i].value.dp_value,cmd2->dps[i].value.dp_value);
             break;
         case PROP_ENUM:
-            PR_DEBUG("dp_enum value: %d", cmd->dps[i].value.dp_enum);
+            PR_DEBUG("dp_enum value: %d,%d", cmd->dps[i].value.dp_enum,cmd2->dps[i].value.dp_enum);
             break;
         case PROP_STR:
-            PR_DEBUG("dp_str value: %s", cmd->dps[i].value.dp_str);
+            cmd2->dps[i].value.dp_str = malloc(strlen(cmd->dps[i].value.dp_str)+1);
+            strcpy(cmd2->dps[i].value.dp_str,cmd->dps[i].value.dp_str);
+            
+            PR_DEBUG("dp_str value: %s,%s", cmd->dps[i].value.dp_str,cmd2->dps[i].value.dp_str);
             break;
         }
     }
-
+   queue_pushback(queue_dp_cmd, (void *)(cmd2));
+       
     op_ret = dev_report_dp_json_async(cmd->cid, cmd->dps, cmd->dps_cnt);
     if (op_ret != OPRT_OK) {
         PR_ERR("dev_report_dp_json_async err: %d", op_ret);

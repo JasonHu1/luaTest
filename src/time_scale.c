@@ -237,7 +237,7 @@ int timer_60s_cb(void*param)
     lua_pushinteger(L, n->channel);
     lua_pushlightuserdata(L,&source);
     //7.执行指定lua函数
-    if((ret = lua_pcall(L, 3, 0, 0))!=LUA_OK)//有2个入参数，0个返回值
+    if((ret = lua_pcall(L, 4, 0, 0))!=LUA_OK)//有2个入参数，0个返回值
     {
         const char *pErrorMsg = lua_tostring(L, -1);  
         vDBG_ERR("ret=%d,%s",ret,pErrorMsg);

@@ -328,10 +328,14 @@ int __modbus_write_register(lua_State* L){
     int ret;
     int n = lua_gettop(L);
     vDBG_INFO("stack param count=%d",n);
-    if(!lua_istable(L,-1)){
-        vDBG_ERR("stack top is not table");
-        return -1;
+    if(!lua_istable(L,-2)){
+        vDBG_ERR("stack second is not table");
+        return 0;
     }
+    int registerVal=lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    PR_DEBUG("val=%d",registerVal);
+    
     lua_pushstring(L,"fc");
     lua_gettable(L,-2);
     int fc=lua_tointeger(L, -1);
@@ -357,37 +361,22 @@ int __modbus_write_register(lua_State* L){
     int channel=lua_tointeger(L, -1);
     lua_pop(L, 1);
 
-    vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d",fc,addr,cnt,slave);
+    vDBG_MODBUS(DBG_DEBUG,"fc=%d,addr=%d,cnt=%d,slave=%d,channel=%d",fc,addr,cnt,slave,channel);
 
-    if(!lua_istable(L,-2)){
-        vDBG_ERR("stack -2 is not table");
-        return -1;
-    }
-    lua_pushinteger(L,1);
-    lua_gettable(L,-2);
-    int val =lua_tointeger(L, -1);
-    lua_pop(L, 1);
-
-    if(cnt>32){
-        vDBG_WARN("static apply memery max is 32 Bytes,BUT cnt=%d",cnt);
-        return 0;
-    }
     COMM_INFO_T*conn = user_get_conn_context_byChannel(channel);
     if(conn == NULL){
         vDBG_ERR("comm context is null");
         return 0;
     }
-    lua_newtable(L);
     
     //01 (0x01) Read Coils
     modbus_set_slave(conn->pConnCxt, slave);
-    if(ret = modbus_write_register(conn->pConnCxt,addr,val)!= -1){
+    if(ret = modbus_write_register(conn->pConnCxt,addr,registerVal)!= -1){
     }else{
         vDBG_ERR("errno=%d,faile=%s",errno,modbus_strerror(errno));
     }
-    
-
-    return 1;
+   
+    return 0;
 
 }
 /*15 (0x0F) Write Multiple Coils*/
@@ -455,10 +444,11 @@ int __modbus_write_registers(lua_State* L){
     int ret;
     int n = lua_gettop(L);
     vDBG_INFO("stack param count=%d",n);
-    if(!lua_istable(L,-1)){
-        vDBG_ERR("stack top is not table");
+    if(!lua_istable(L,-2)){
+        vDBG_ERR("stack second is not table");
         return -1;
     }
+    
     lua_pushstring(L,"fc");
     lua_gettable(L,-2);
     int fc=lua_tointeger(L, -1);
@@ -491,13 +481,17 @@ int __modbus_write_registers(lua_State* L){
         return 0;
     }
 
+    if(!lua_istable(L,-2)){
+        vDBG_ERR("stack -2 is not table");
+        return -1;
+    }
+
     uint16 rdData[32]={0};
 
     if(cnt>32){
         vDBG_WARN("static apply memery max is 32 Bytes,BUT cnt=%d",cnt);
         return 0;
     }
-    lua_newtable(L);
     
     //01 (0x01) Read Coils
     modbus_set_slave(conn->pConnCxt, slave);

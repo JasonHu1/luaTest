@@ -148,7 +148,7 @@ STATIC VOID __gw_reset_cb(GW_RESET_TYPE_E type)
     PR_DEBUG("gw reset callback");
     // TODO
     if (GW_RESET_DATA_FACTORY != type) {
-        exit(0);
+        //exit(0);
     }
 
     return;
@@ -195,7 +195,7 @@ STATIC VOID __gw_net_stat_cb(BOOL_T online)
 VOID __dp_cmd_obj(IN CONST TY_RECV_OBJ_DP_S *dp)
 {
     PR_DEBUG("soc recv obj dp cmd, cmd_tp: %d, dtt_tp: %d, dp_cnt: %u", dp->cmd_tp, dp->dtt_tp, dp->dps_cnt);
-
+    DEV_DESC_IF_S *dev_if;
     if (dp->cid != NULL) {
         PR_DEBUG("soc not have cid, %s", dp->cid);
         return;
@@ -215,6 +215,13 @@ VOID __dp_cmd_obj(IN CONST TY_RECV_OBJ_DP_S *dp)
         }//end of switch
     }
     // TODO
+    //拿到pid
+    dev_if = tuya_iot_get_dev_if(dp->cid);
+    if (dev_if == NULL) {
+        vDBG_ERR("error");
+        return TRUE;
+    }
+    vDBG_APP(DBG_DEBUG,"dev_if->product_key=%s",dev_if->product_key);
 
     // simple test
     OPERATE_RET op_ret = dev_report_dp_json_async(dp->cid, dp->dps, dp->dps_cnt);

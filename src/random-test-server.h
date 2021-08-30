@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "hal_comm.h"
+#include "modbus.h"
 
 
 
@@ -20,16 +21,7 @@ typedef struct
 	struct sockaddr_in cli_addr;
 } LocalSocketRecord_t;
 
-typedef struct _slaveInfoList{
-    struct _slaveInfoList *next;
-    struct _slaveInfoList *previous;
-    uint8 channel;//identy which port that bind
-    uint8 pid[128];//use for get lua script
-    uint8 devName[128];//device nick name for user change
-    uint32 rptInterval;//report time interval
-    uint8 slave;
-    void *pdata;
-}SLAVEINFOLIST_T;
+
 
 
 extern LocalSocketRecord_t* gpTcpClientList;
