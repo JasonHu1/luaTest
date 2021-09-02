@@ -1,5 +1,12 @@
 #include "tuya_proto.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "app_debug_printf.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Test classes

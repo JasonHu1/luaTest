@@ -5,8 +5,16 @@
 #include <string>
 #include <string.h>
 #include <list>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "tuya_cloud_com_defs.h"
 #include "app_debug_printf.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 
 using namespace std;

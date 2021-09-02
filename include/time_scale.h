@@ -3,6 +3,7 @@
 #include "app_defs_types.h"
 #include "app_debug_printf.h"
 #include "modbus.h"
+#include <stdio.h>
 
 typedef int (*timerfunctionCB)(void*param);
 typedef enum {

@@ -119,11 +119,11 @@ OPERATE_RET user_svc_start(VOID *cb)
 #else
     tuya_iot_wf_sdk_init(wifi_cfg, wifi_start_mode,                    \
                          js_pid->valuestring, js_version->valuestring, \
-                         attr, attr_num);
+                         attr, attr_num);e
 #endif
 #else
     tuya_iot_sdk_init(js_pid->valuestring, js_version->valuestring, \
-                      attr, attr_num);
+                      attr, attr_num);w
 #endif
 
     tuya_iot_sdk_reg_net_stat_cb(get_nwk_stat, get_wifi_nwk_stat);

@@ -6,8 +6,8 @@ ROOT_DIR ?= $(shell pwd)
 #COMPILE_PREX ?=~/toolchains/gcc-linaro-6.2.1-2016.11/bin/arm-linux-gnueabihf-
 COMPILE_PREX ?=
 USER_LINK_FLAGS ?=
-#LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_gcc-linaro-621-201611_3.0.1-beta.263)
-LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266)
+LIB_DIR ?= $(abspath ../tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266)
+#LIB_DIR ?= $(abspath ../tuya_sdk_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266)
 
 
 -include ./build/build_param
@@ -30,7 +30,7 @@ $(info CPP=$(CPP))
 $(info OBJCOPY=$(OBJCOPY))
 $(info OBJDUMP=$(OBJDUMP))
 
-APP_PACK = ./build/pack.sh
+APP_PACK = ./build/pack.sh 
 
 LINKFLAGS = \
         -L$(LIB_DIR)/sdk/lib -ltuya_gw_ext_sdk -pthread -lm
@@ -40,10 +40,14 @@ LINKFLAGS += $(USER_LINK_FLAGS)
 LINKFLAGS += `pkg-config --libs libmodbus`
 
 CCFLAGS = \
-	-g -fPIC -MMD -Werror=incompatible-pointer-types -O0
+	-g -Werror -fPIC -MMD -Werror=incompatible-pointer-types -O0
 CCFLAGS += `pkg-config --cflags libmodbus`
 
-CPPFLAGS += -std=c++11
+CPPFLAGS += -std=c++11 \
+			-Werror \
+			-fPIC \
+			-MMD \
+			-O0
 
 DEFINES = -DAPP_BIN_NAME=\"$(APP_BIN_NAME)\" \
 		  -DUSER_SW_VER=\"$(USER_SW_VER)\" \
@@ -81,7 +85,7 @@ USER_OBJS = $(addsuffix .o, $(USER_SRCS))
 #user的实际obj地址
 USER_OBJS_OUT =  $(addprefix $(OUTPUT_DIR_OBJS)/, $(USER_OBJS))
 
-DEPENDS := $(addsuffix .d,$(USER_SRCS))
+DEPENDS := $(addprefix $(OUTPUT_DIR_OBJS)/,$(addsuffix .d,$(USER_SRCS)))
 
 all: pack
 
@@ -102,15 +106,21 @@ $(OUTPUT_DIR_OBJS)/%.c.o: %.c
 	
 $(OUTPUT_DIR_OBJS)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@);
-	@$(CPP) $(CFLAGS) $(CPPFLAGS) -o $@ -c $< 
+	@$(CPP) $(CPPFLAGS) $(DEFINES) $(USER_INCS) $(USER_CFLAGS) -o $@ -c $< 
+	@echo "目标文件..$@"
+	@echo "依赖文件..$^"
 
 $(OUTPUT_DIR_OBJS)/%.s.o: %.s
 	@mkdir -p $(dir $@);
 	$(CC) $(CFLAGS) -o $@ -c $< 
+	@echo "目标文件..$@"
+	@echo "依赖文件..$^"
 
 $(OUTPUT_DIR_OBJS)/%.S.o: %.S
 	@mkdir -p $(dir $@);
 	$(CC) $(CFLAGS) -D__ASSEMBLER__ -o $@ -c $< 
+	@echo "目标文件..$@"
+	@echo "依赖文件..$^"
 
 
 .PHONY: all clean SHOWARGS build_app pack

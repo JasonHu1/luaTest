@@ -66,7 +66,7 @@ int socketSeverInit( uint32 port )
       
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	  serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port);
     stat = bind(lsSocket->socketFd, (struct sockaddr *) &serv_addr,
              sizeof(serv_addr));
@@ -93,11 +93,11 @@ int addTcpClientListRec(modbus_t *ctx )
   
   LocalSocketRecord_t *newSocket = malloc( sizeof( LocalSocketRecord_t ) );
   if(newSocket==NULL)
-    {
+  {
     DEBUG("mem error!");
-    }
+  }
   newSocket->context = ctx;
-  vdbg_printf("newSocket->context=%08x",newSocket->context);
+  vdbg_printf("newSocket->context=%p",newSocket->context);
   //open a new client connection with the listening socket (at head of list)
   newSocket->clilen = sizeof(newSocket->cli_addr);
       

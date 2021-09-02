@@ -39,7 +39,7 @@ int message_encode(void){
     
     FILE *fp = fopen("../../lua/test_luaBridge.lua", "r");
     std::cout<<"fp:"<<fp<<std::endl;
-    printf("fp:%d\r\n",fp);
+    printf("fp:%p\r\n",fp);
     if(fp){
         fseek(fp, 0, SEEK_END);
         fsize = ftell(fp);

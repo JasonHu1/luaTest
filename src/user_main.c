@@ -219,7 +219,7 @@ VOID __dp_cmd_obj(IN CONST TY_RECV_OBJ_DP_S *dp)
     dev_if = tuya_iot_get_dev_if(dp->cid);
     if (dev_if == NULL) {
         vDBG_ERR("error");
-        return TRUE;
+        return;
     }
     vDBG_APP(DBG_DEBUG,"dev_if->product_key=%s",dev_if->product_key);
 
@@ -229,7 +229,7 @@ VOID __dp_cmd_obj(IN CONST TY_RECV_OBJ_DP_S *dp)
         PR_DEBUG("dev_report_dp_json_async err: %d", op_ret);
     }
 
-
+    return;
 }
 
 VOID __dp_cmd_raw(IN CONST TY_RECV_RAW_DP_S *dp)
@@ -263,6 +263,7 @@ VOID __dp_cmd_query(IN CONST TY_DP_QUERY_S *dp_qry)
             // TODO
         }
     }
+    return;
 }
 
 extern void* app_main_loop(void*args);

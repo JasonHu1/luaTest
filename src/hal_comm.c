@@ -176,7 +176,7 @@ int queue_pushback(QUEUE_MANAGER_T*queue,void*content)
         element->content = content;
         element->next=NULL;
     }
-    vDBG_APP(DBG_DEBUG,"element=%08x,content=%08x",element,content);
+    vDBG_APP(DBG_DEBUG,"element=%p,content=%p",element,content);
 
     pthread_mutex_lock(&queue->mutex_queue);
     if(queue->head==NULL){
@@ -206,7 +206,7 @@ int queue_popfront(QUEUE_MANAGER_T*queue,void**content)
         *content = queue->head->content;
         queue->head = queue->head->next;
 
-        vDBG_APP(DBG_DEBUG,"element=%08x,*content=%08x",element,*content);
+        vDBG_APP(DBG_DEBUG,"element=%p,*content=%p",element,*content);
         free(element);
         --(queue->nb);
         ret =0;

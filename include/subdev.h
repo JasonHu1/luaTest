@@ -2,6 +2,7 @@
 #define __SUBDEVICE_H__
 #include "tuya_iot_com_api.h"
 #include "app_debug_printf.h"
+#include <unistd.h>
 #include "modbus.h"
 #include "unit-test.h"
 #include <pthread.h>
@@ -9,6 +10,7 @@
 #include <errno.h>
 #include "time_scale.h"
 #include "tuya_cloud_com_defs.h"
+#include "tuya_gw_subdev_api.h"
 #include "hal_comm.h"
 
 #define DEVICE_ID_CONTACT   "0006dffffe67e2ac" 
@@ -41,5 +43,6 @@ int regist_subdevice(CHAR_T *dev_id,CHAR_T *pid);
 
 SLAVEINFOLIST_T* user_find_slaveNode_byDid(char * did);
 int user_save_slaveList(IN CONST CHAR_T * str_cfg);
+int start_slave_timeScale(void);
 
 #endif//__SUBDEVICE_H__

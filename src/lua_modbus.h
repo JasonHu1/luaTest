@@ -11,7 +11,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
+ 
 
 int __modbus_read_bits(lua_State* L);
 int __modbus_read_input_bits(lua_State* L);

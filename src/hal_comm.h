@@ -1,13 +1,14 @@
 #ifndef __HAL_COMM_H__
 #define __HAL_COMM_H__
+#if 1
 #include "app_debug_printf.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "ty_cJSON.h"
 #include "random-test-server.h"
-
-
+#include <pthread.h>
+#endif
 #define BUS_PROTOCOL_MODBUS         1
 #define BUS_PROTOCOL_KNX            2
 

@@ -9,6 +9,8 @@ extern "C" {
 #include "tuya_cloud_types.h"
 #include "tuya_cloud_com_defs.h"
 #include "ty_cJSON.h"
+#include "user_dev_exmaple_intf.h"
+
 
 OPERATE_RET user_iot_init(IN CONST CHAR_T *cfg);
 

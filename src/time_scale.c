@@ -1,5 +1,6 @@
 #include "time_scale.h"
 #include <pthread.h>
+#include <unistd.h>
 #include "app_debug_printf.h"
 #include "subdev.h"
 #include "lua.h"
@@ -29,8 +30,9 @@ static int timeScaleList_add(TIMESCALE_PAYLOAD_T*node)
     }
     p->content = node;
     pthread_mutex_lock(&mutex_timescale);
-    vDBG_TIMER(DBG_MSGDUMP,"p=%08x",p);
-    if(timeScaleDoubleList==NULL){
+    vDBG_TIMER(DBG_MSGDUMP,"p=%p",p);
+    if(timeScaleDoubleList==NULL){
+
         timeScaleDoubleList = p;
         timeScaleDoubleList->next = NULL;
         timeScaleDoubleList->previous = NULL;
@@ -77,7 +79,7 @@ int timescale_create(uint32 timeout,void *cb_param,TIMESCALE_MODE_T mode,timerfu
     p->timerId = seconds;
     p->timeout = timeout+seconds;
     p->Reloads = timeout;
-    vDBG_TIMER(DBG_MSGDUMP,"seconds = %lld,%lld,&p=%08x,p->cb=%08x",p->timeout,seconds,p,p->cb);
+    vDBG_TIMER(DBG_MSGDUMP,"seconds = %d,%ld,&p=%p,p->cb=%p",p->timeout,seconds,p,p->cb);
     timeScaleList_add(p);
     return 0;
 }
@@ -87,7 +89,7 @@ void * timescale_task_loop(void*args){
 
     for(;;){
         seconds = time(NULL);
-        vDBG_TIMER(DBG_MSGDUMP,"timestamp:%lld",seconds);
+        vDBG_TIMER(DBG_MSGDUMP,"timestamp:%ld",seconds);
         TimeScaleListElement_t* pN = timeScaleDoubleList;
         TimeScaleListElement_t* pNode = NULL;
         sleep(1);
@@ -97,7 +99,7 @@ void * timescale_task_loop(void*args){
         }
         pthread_mutex_lock(&mutex_timescale);
         do{
-            vDBG_TIMER(DBG_MSGDUMP,"pN->content->timeout:%lld,pN=%08x,pN->content=%08x",pN->content->timeout,pN,pN->content);
+            vDBG_TIMER(DBG_MSGDUMP,"pN->content->timeout:%d,pN=%p,pN->content=%p",pN->content->timeout,pN,pN->content);
             if(seconds >= pN->content->timeout){
                 if(pN->content->cb){
                     (pN->content->cb)(pN->content->cb_param);
@@ -242,7 +244,7 @@ int timer_60s_cb(void*param)
         const char *pErrorMsg = lua_tostring(L, -1);  
         vDBG_ERR("ret=%d,%s",ret,pErrorMsg);
         lua_close(L);  
-        return ;  
+        return 0;  
     }
 
     /* 清除Lua */    
