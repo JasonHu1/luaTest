@@ -1,0 +1,16 @@
+spec:
+  name: industry_lua_app
+  version: EMBED_VERSION
+  summary: embed module created by embedded-cli.
+  homepage: YOUR_HOMEPAGE
+  license:
+    type: MIT
+    file: LICENSE
+  author:
+    name: embedCI
+
+    email: embed@tuya.com
+
+  source:
+    git: https://registry.code.tuya-inc.top/ci_gw_technology_group/industry_lua_app.git
+    tag: EMBED_VERSION
