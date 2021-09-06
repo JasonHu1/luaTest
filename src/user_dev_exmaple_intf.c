@@ -225,7 +225,7 @@ STATIC VOID __dev_hb_cb(CONST CHAR_T *dev_id)
         PR_ERR("invalid param");
         return;
     }
-    vDBG_SDKCb(DBG_INFO,"dev_id=%s",dev_id);
+    PR_DEBUG("dev_id=%s",dev_id);
     
     op_ret = tuya_iot_fresh_dev_hb(dev_id);
     if (op_ret != OPRT_OK) {

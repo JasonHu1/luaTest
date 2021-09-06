@@ -9,7 +9,8 @@
 #include "tuya_iot_wifi_api.h"
 #include "tuya_iot_com_api.h"
 #include "tuya_iot_sdk_api.h"
-
+#include "user_dev_exmaple_intf.h"
+#include "time_scale.h"
 #include "user_iot_intf.h"
 
 STATIC ty_cJSON *ty_sdk_cfg = NULL;
@@ -119,11 +120,11 @@ OPERATE_RET user_svc_start(VOID *cb)
 #else
     tuya_iot_wf_sdk_init(wifi_cfg, wifi_start_mode,                    \
                          js_pid->valuestring, js_version->valuestring, \
-                         attr, attr_num);e
+                         attr, attr_num);
 #endif
 #else
     tuya_iot_sdk_init(js_pid->valuestring, js_version->valuestring, \
-                      attr, attr_num);w
+                      attr, attr_num);
 #endif
 
     tuya_iot_sdk_reg_net_stat_cb(get_nwk_stat, get_wifi_nwk_stat);
@@ -177,36 +178,30 @@ OPERATE_RET user_iot_init(IN CONST CHAR_T *str_cfg)
 #else
     GW_PROD_INFO_S prod_info = {0};
 #endif
-
     TY_IOT_APP_CBS_S iot_app_cbs =  {
         .gw_app_log_path_cb = __gw_local_log_cb,
     };
-
     tuya_os_intf_init();
 
     ty_sdk_cfg = ty_cJSON_Parse(str_cfg);
     if (ty_sdk_cfg == NULL) {
-        PR_ERR("param cfg is invalid");
+        printf("param cfg is invalid\r\n");
         return OPRT_INVALID_PARM;       
     }
-
     ty_cJSON *js_path = ty_cJSON_GetObjectItem(ty_sdk_cfg, "storage_path");
     if (js_path == NULL  || js_path->type != ty_cJSON_String) {
-        PR_ERR("param cfg is invalid");
+        printf("param cfg is invalid");
         return OPRT_INVALID_PARM;
     }
-
     op_ret = tuya_iot_init(js_path->valuestring);
     if (op_ret != OPRT_OK) {
-        PR_ERR("tuya_iot_init err: %d", op_ret);
+        printf("tuya_iot_init err: %d", op_ret);
         return op_ret;
     }
-
     ty_cJSON *js_log_level = ty_cJSON_GetObjectItem(ty_sdk_cfg, "log_level");
     if (js_log_level && js_log_level->type == ty_cJSON_Number) {
         SET_PR_DEBUG_LEVEL(js_log_level->valueint);
     }
-
     ty_cJSON *js_uuid = ty_cJSON_GetObjectItem(ty_sdk_cfg, "uuid");
     ty_cJSON *js_authkey = ty_cJSON_GetObjectItem(ty_sdk_cfg, "authkey");
     prod_info.uuid = js_uuid->valuestring;
@@ -229,9 +224,11 @@ OPERATE_RET user_iot_init(IN CONST CHAR_T *str_cfg)
         PR_ERR("tuya_iot_set_gw_prod_info err: %d", op_ret);
         return op_ret;
     }
-
+    ty_cJSON *js_script_path = ty_cJSON_GetObjectItem(ty_sdk_cfg, "script_path");
+    if(js_script_path!=NULL){
+        set_script_path(js_script_path->valuestring);
+    }
     tuya_iot_app_cbs_init(&iot_app_cbs);
-
     return op_ret;
 }
 

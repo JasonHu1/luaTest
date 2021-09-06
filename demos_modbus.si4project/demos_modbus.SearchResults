@@ -1,0 +1,2 @@
+---- parse json config failed Matches (1 in 1 files) ----
+main in user_main.c (X:\code\demo_modbus\src) :         printf("parse json config failed\n");

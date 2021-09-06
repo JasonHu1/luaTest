@@ -1,0 +1,3 @@
+X:/code/demo_modbus/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+X:/code/demo_modbus/cmake-build-debug/CMakeFiles/demo_modbus.dir
+X:/code/demo_modbus/cmake-build-debug/CMakeFiles/edit_cache.dir

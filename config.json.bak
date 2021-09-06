@@ -1,0 +1,36 @@
+{
+    "pid": "9ba2vd7jriwkv0qr",
+    "uuid": "tuyab01858d5e6495b4a",
+    "authkey": "dqFRDVgnrOtV2zghkA1JhXur3hWE08zv",
+    "storage_path": "./",
+    "script_path":"../../component/industry_lua_app",
+    "sw_ver": "1.0.0",
+    "log_level": 4,
+    "user": [
+        {
+            "tp": 10,
+            "sw_ver": "1.0.0"
+        }
+    ],
+    "uart":[
+        {
+            "proto":"modbus",
+            "dev_nmae":"/dev/ttyUSB0",
+            "baud":9600,
+            "parity":"none",
+            "data_bits":8,
+            "stop_bits":1,
+            "channel":1
+        }
+    ],
+    "slaves":[
+        {
+            "channel":1,
+            "slave":1,
+            "interval":1,
+            "did":"channel_1_slave_1",
+            "pid":"ymig1ngqabhkuvxj",
+            "nick":"temp.humi"
+        }
+    ]
+}

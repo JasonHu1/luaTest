@@ -31,17 +31,17 @@ $(info OBJCOPY=$(OBJCOPY))
 $(info OBJDUMP=$(OBJDUMP))
 
 APP_PACK = ./build/pack.sh 
+LIB_PATH:= ./library
 
 LINKFLAGS = \
-        -L$(LIB_DIR)/sdk/lib -ltuya_gw_ext_sdk -pthread -lm
+		-L$(LIB_PATH) \
+        -L$(LIB_DIR)/sdk/lib -ltuya_gw_ext_sdk -pthread -lm -static -ltuyaipc
 #LINKFLAGS += -L./library/lib -lmodbus -llua
 
 LINKFLAGS += $(USER_LINK_FLAGS)
-LINKFLAGS += `pkg-config --libs libmodbus`
 
 CCFLAGS = \
 	-g -Werror -fPIC -MMD -Werror=incompatible-pointer-types -O0
-CCFLAGS += `pkg-config --cflags libmodbus`
 
 CPPFLAGS += -std=c++11 \
 			-Werror \
@@ -62,24 +62,33 @@ OUTPUT_DIR_OBJS = $(OUTPUT_DIR)/.objs
 #user app基准路径
 USER_SRC_BASE_DIR = ./src
 USER_SRC_BASE_DIR += ./3rd-party
+USER_SRC_BASE_DIR += ./component/industry_lua_app
+USER_SRC_BASE_DIR += ./component/industry_proto_mgr
+USER_SRC_BASE_DIR += ./component/proto_modbus
+
 
 USER_INC_BASE_DIR = ./include
 USER_INC_BASE_DIR += ./src
 USER_INC_BASE_DIR += ./3rd-party
-
+USER_INC_BASE_DIR += ./3rd-party/LuaBridge/
+USER_INC_BASE_DIR += ./3rd-party/LuaBridge/detail
+USER_INC_BASE_DIR += ./component/industry_lua_app
+USER_INC_BASE_DIR += ./component/industry_proto_mgr
+USER_INC_BASE_DIR += ./component/proto_modbus
 USER_INC_BASE_DIR += ./library/include
-
 USER_INC_BASE_DIR += $(shell find $(LIB_DIR)/sdk -name include -type d)
 
 #user app 编译文件
 USER_SRC_DIRS = $(shell find $(USER_SRC_BASE_DIR) -type d)
+
+#user头文件
+USER_INCS = $(addprefix -I ,  $(shell find $(USER_INC_BASE_DIR) -type d) )
+USER_INCS += -I $(LIB_PATH)/include
+#***********FILES**********************#
 USER_SRCS += $(foreach dir, $(USER_SRC_DIRS), $(wildcard $(dir)/*.c)) 
 USER_SRCS += $(foreach dir, $(USER_SRC_DIRS), $(wildcard $(dir)/*.cpp)) 
 USER_SRCS += $(foreach dir, $(USER_SRC_DIRS), $(wildcard $(dir)/*.s)) 
 USER_SRCS += $(foreach dir, $(USER_SRC_DIRS), $(wildcard $(dir)/*.S)) 
-#user头文件
-USER_INCS = $(addprefix -I ,  $(shell find $(USER_INC_BASE_DIR) -type d) )
-
 #user的obj命令
 USER_OBJS = $(addsuffix .o, $(USER_SRCS))
 #user的实际obj地址

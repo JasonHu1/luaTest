@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "time_scale.h": "c",
+        "app_defs_types.h": "c",
+        "app_debug_printf.h": "c",
+        "subdev.h": "c",
+        "random-test-server.h": "c",
+        "ostream": "cpp"
+    }
+}

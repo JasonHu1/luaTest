@@ -1,0 +1,43 @@
+/home/jason/code/demo_modbus/output/modbus_server_1.0.0/.objs/./component/industry_proto_mgr/src/subdev.c.o: \
+ component/industry_proto_mgr/src/subdev.c \
+ component/industry_proto_mgr/include/subdev.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_api_iot/include/tuya_iot_com_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_iot_config/include/tuya_cloud_types.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_iot_config/include/tuya_iot_config.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_iot_config/include/tuya_cloud_error_code.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_iot_config/include/tuya_error_code.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_devos/include/tuya_cloud_com_defs.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_utilities/include/ty_cJSON.h \
+ component/proto_modbus/include/modbus.h \
+ component/proto_modbus/include/modbus-version.h \
+ component/proto_modbus/include/modbus-tcp.h \
+ component/proto_modbus/include/modbus.h \
+ component/proto_modbus/include/modbus-rtu.h \
+ component/industry_proto_mgr/include/time_scale.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_log_mng/include/uni_log.h \
+ 3rd-party/lua_530/include/lua.h 3rd-party/lua_530/include/luaconf.h \
+ 3rd-party/lua_530/include/lualib.h 3rd-party/lua_530/include/lua.h \
+ 3rd-party/lua_530/include/lauxlib.h \
+ component/industry_proto_mgr/include/hal_comm.h \
+ component/industry_proto_mgr/include/random-test-server.h \
+ component/industry_proto_mgr/include/unit-test.h \
+ component/industry_proto_mgr/include/random-test-server.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_subdev_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_com_defs.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_com_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_subdev_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_init_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_devos/include/tuya_cloud_base_defs.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_os_adapter/include/tuya_hal_wired.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_os_adapter/include/tuya_hal_network.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_os_adapter/include/tuya_os_adapter.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_os_adapter/include/tuya_os_adapter_error_code.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_os_adapter/include/tuya_os_adapter.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_devos/include/tuya_cloud_wifi_defs.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_home_security_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_group_scene_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_fault_replace_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/base_utilities/include/uni_slist.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_engineer_api.h \
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_audio_scene_api.h \
+ component/industry_proto_mgr/include/lua_modbus.h

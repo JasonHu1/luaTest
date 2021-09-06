@@ -2,17 +2,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <pthread.h>
 #include "uni_log.h"
 
 #include "tuya_iot_com_api.h"
 #include "tuya_iot_sdk_api.h"
 #include "tuya_iot_sdk_defs.h"
 #include <errno.h>
-#include "unit-test.h"
 #include "modbus.h"
 #include <sys/epoll.h>
-#include "app_debug_printf.h"
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,25 +24,15 @@
 #include <sys/signal.h>
 #include <sys/ioctl.h>
 #include <sys/epoll.h>
-#include <errno.h>
-#include "app_defs_types.h"
-#include "subdev.h"
-#include "app_debug_printf.h"
+#include <errno.h> 
 #include "random-test-server.h"
-
 #include "user_iot_intf.h"
-#include "app_debug_printf.h"
-#include "subdev.h"
-#include "random-test-server.h"
 #include "time_scale.h"
+#include "tuya_gw_subdev_api.h"
 
 #define COUNT_NUM   1
 #define EPOLL_TIMEOUT_MS    50
-
-
-
-int g_debug_level=DBG_DEBUG;
-unsigned int g_debug_module= MODULE_DBG_ALL;
+#define MAX_EVENTS 10
 
 int gSerialNm=1;
 int gTcpClientNm=0;
@@ -106,29 +95,36 @@ STATIC CHAR_T *__parse_config_file(CONST CHAR_T *filename)
 
     file = fopen(filename, "rb");
     if (file == NULL) {
+        printf("Open logfile failed:%s ", strerror(errno));
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         goto out;
     }
 
     if (fseek(file, 0, SEEK_END) != 0) {
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         goto out;
     }
 
     length = ftell(file);
     if (length < 0) {
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         goto out;
     }
 
     if (fseek(file, 0, SEEK_SET) != 0) {
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         goto out;
     }
 
     content = (CHAR_T *)malloc((UINT_T)length + SIZEOF (""));
     if (content == NULL) {
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         goto out;
     }
 
     read_chars = fread(content, 1, (UINT_T)length, file);
     if (read_chars != length) {
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         free(content);
         content = NULL;
         goto out;
@@ -137,6 +133,7 @@ STATIC CHAR_T *__parse_config_file(CONST CHAR_T *filename)
 
 out:
     if (file != NULL) {
+        printf("< %s :%d >[55555555555]",__FUNCTION__,__LINE__);
         fclose(file);
     }
 
@@ -218,10 +215,10 @@ VOID __dp_cmd_obj(IN CONST TY_RECV_OBJ_DP_S *dp)
     //拿到pid
     dev_if = tuya_iot_get_dev_if(dp->cid);
     if (dev_if == NULL) {
-        vDBG_ERR("error");
-        return;
+        PR_ERR("error");
+        return ;
     }
-    vDBG_APP(DBG_DEBUG,"dev_if->product_key=%s",dev_if->product_key);
+    PR_DEBUG("dev_if->product_key=%s",dev_if->product_key);
 
     // simple test
     OPERATE_RET op_ret = dev_report_dp_json_async(dp->cid, dp->dps, dp->dps_cnt);
@@ -229,7 +226,7 @@ VOID __dp_cmd_obj(IN CONST TY_RECV_OBJ_DP_S *dp)
         PR_DEBUG("dev_report_dp_json_async err: %d", op_ret);
     }
 
-    return;
+
 }
 
 VOID __dp_cmd_raw(IN CONST TY_RECV_RAW_DP_S *dp)
@@ -263,9 +260,13 @@ VOID __dp_cmd_query(IN CONST TY_DP_QUERY_S *dp_qry)
             // TODO
         }
     }
-    return;
 }
-
+void MsgHandler(void *msgData)
+{
+    ipc_buff *msgBuff = (ipc_buff *)msgData;
+    printf("Receive From Server: Type:[%d], Data:[\"%s\"]\n\n",
+           msgBuff->msg_type, msgBuff->msg_data);
+}
 extern void* app_main_loop(void*args);
 
 int main(int argc, char **argv)
@@ -286,39 +287,32 @@ int main(int argc, char **argv)
         .raw   = __dp_cmd_raw,
         .query = __dp_cmd_query
     };
-    
+    ipc_regist_receiver(MsgHandler, IPC_SERVER);
+    ipc_init(IPC_CLIENT);
+
     char cfgfilePath[512]={0};
-    vDBG_INFO("argc=%d",argc);
+    printf("argc=%d",argc);
     for(int m=0;m<argc;m++){
-        vDBG_INFO("argv[%d]=%s",m,argv[m]);
+         printf("argv[%d]=%s\r\n",m,argv[m]);
     }
     if(argc == 1){
-        vDBG_ERR("Please give config.json path!!!");
+        printf("Please give config.json path!!!");
         exit(-1);
     }else{
         sprintf(cfgfilePath,"%s/%s",argv[1],"config.json");
     }
-    vDBG_APP(DBG_INFO,"cfgfilePath=%s",cfgfilePath);
-    vDBG_APP(DBG_INFO,"app module debug level is info");
-    vDBG_INFO("g_debug_module & MODULE_DBG_APP00 = %d",g_debug_module & MODULE_DBG_APP00);
-    
-    if(g_debug_module & MODULE_DBG_APP00){
-        vDBG_INFO("open app module debug");
-    }
-    if(!(g_debug_module & MODULE_DBG_APP00)){
-        vDBG_INFO("close app module debug");
-    }
-    
-    vDBG_INFO("%s",tuya_iot_get_sdk_info());
+    printf("cfgfilePath=%s\r\n",cfgfilePath);
+    printf("app module debug level is info\r\n");
+
+    printf("%s",tuya_iot_get_sdk_info());
     cfg_str = __parse_config_file(cfgfilePath);
     if (cfg_str == NULL) {
         printf("parse json config failed\n");
         return 0;
     }
-
     op_ret = user_iot_init(cfg_str);
     if (op_ret != OPRT_OK) {
-        PR_ERR("user_iot_init err: %d", op_ret);
+        printf("user_iot_init err: %d", op_ret);
         return op_ret;
     }
 
@@ -330,17 +324,17 @@ int main(int argc, char **argv)
         PR_ERR("user_svc_init err: %d", op_ret);
         return op_ret;
     }
-
+    printf("< JasonDbg >[%s:%d]%s() \r\n",__FILE__,__LINE__,__FUNCTION__);
     op_ret = user_svc_start(NULL);
     if (op_ret != OPRT_OK) {
         PR_ERR("user_svc_start err: %d", op_ret);
         return op_ret;
     }
-    
+    printf("< JasonDbg >[%s:%d]%s() \r\n",__FILE__,__LINE__,__FUNCTION__);
     tuya_iot_reg_dp_cb(DP_GW, 0, &dp_cbs);
     
     timescale_init();
-
+    printf("< JasonDbg >[%s:%d]%s() \r\n",__FILE__,__LINE__,__FUNCTION__);
     {
         int s_tcp = -1,s_tcp_pi;
         modbus_t *ctx_tcp,*ctx_tcp_pi;
@@ -359,21 +353,21 @@ int main(int argc, char **argv)
         /**********uart setting***********/
         COMM_INFO_T *uartCfg = user_get_uartConfigure(&serialNm);
         if((0==serialNm) || (uartCfg == NULL)){
-            vDBG_ERR("uart config information error");
+            PR_ERR("uart config information error");
             exit(-1);
         }
         for(i=0;i<serialNm;i++){
-            vDBG_INFO("uartCfg[0].parity =%d,%c",uartCfg[i].pCfg->parity,uartCfg[i].pCfg->parity);
+             PR_DEBUG("uartCfg[0].parity =%d,%c",uartCfg[i].pCfg->parity,uartCfg[i].pCfg->parity);
             if(BUS_PROTOCOL_MODBUS==uartCfg[i].pCfg->busProto){//modbus
                 uartCfg[i].pConnCxt = modbus_new_rtu(uartCfg[i].pCfg->devName,uartCfg[i].pCfg->baud, uartCfg[i].pCfg->parity, uartCfg[i].pCfg->dataBit, uartCfg[i].pCfg->stopBit);
                 if(rc = modbus_connect(uartCfg[i].pConnCxt)==-1){
-                    vDBG_ERR("ctx[%d] connect failed !!!fd=%d",FD_RANK_SERIAL_START+i,modbus_get_socket(uartCfg[i].pConnCxt));
+                    PR_ERR("ctx[%d] connect failed !!!fd=%d",i,modbus_get_socket(uartCfg[i].pConnCxt));
                     exit(-1);
                 }
                 modbus_set_debug(uartCfg[i].pConnCxt, TRUE);
-                vDBG_INFO("connect fd=%d success",modbus_get_socket(uartCfg[i].pConnCxt));
+                 PR_DEBUG("connect fd=%d success",modbus_get_socket(uartCfg[i].pConnCxt));
                 if(pthread_create(&t,NULL,app_main_loop,NULL)!=0){
-                    vDBG_ERR("pthread create failed");
+                    PR_ERR("pthread create failed");
                     exit(-1);
                 }
             }else if(BUS_PROTOCOL_KNX==uartCfg[i].pCfg->busProto){
@@ -381,7 +375,7 @@ int main(int argc, char **argv)
             }
         }
         if(0!=user_save_slaveList(cfg_str)){
-            vDBG_ERR("can't load the slave device");
+            PR_ERR("can't load the slave device");
             exit(-1);
         }
 
@@ -429,7 +423,7 @@ int main(int argc, char **argv)
 
         for (;;) {
             gTcpClientNm = socketSeverGetNumClients();
-            vDBG_INFO("gTcpClientNm=%d",gTcpClientNm);
+             PR_DEBUG("gTcpClientNm=%d",gTcpClientNm);
             LocalSocketRecord_t *tsock=gpTcpClientList;
             for(i=0;i<gTcpClientNm;i++){
                 add_epoll_fd(epollfd,tsock->socketFd);
@@ -442,15 +436,15 @@ int main(int argc, char **argv)
                     exit(1);
                 }
             }
-            vDBG_MODULE1(DBG_MSGDUMP,"nfds=%d",nfds);
+            PR_ERR("nfds=%d",nfds);
             if(nfds){
                 for (int n = 0; n < nfds; n++) {
-                    vDBG_INFO("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
+                     PR_DEBUG("readyEvents[%d].data.fd=%d",n,readyEvents[n].data.fd);
                     if (readyEvents[n].data.fd == gpTcpClientList->socketFd) {//new connect client socket fd
-                        vDBG_INFO("000");
+                         PR_DEBUG("000");
                         addTcpClientListRec(modbus_new_tcp(NULL, 1502));
                     }
-                    vDBG_INFO("333");
+                     PR_DEBUG("333");
                     //recevie data
                     if(NULL==gpTcpClientList){
                         continue;
@@ -469,7 +463,7 @@ int main(int argc, char **argv)
                             }
                         }
                     }while(iter->next);
-                    vDBG_INFO("444");
+                     PR_DEBUG("444");
                 }
             }else{//non-blocking poll
                 sleep(1);
