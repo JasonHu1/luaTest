@@ -29,6 +29,7 @@
 #include "user_iot_intf.h"
 #include "time_scale.h"
 #include "tuya_gw_subdev_api.h"
+#include "front_ipc.h"
 
 #define COUNT_NUM   1
 #define EPOLL_TIMEOUT_MS    50
@@ -38,6 +39,8 @@ int gSerialNm=1;
 int gTcpClientNm=0;
 int gTcpPiClientNm=0;
 int gIdx=0;
+CHAR_T *gCfg_str = NULL;
+
 LocalSocketRecord_t* gpTcpClientList = NULL;
 //modbus_t *ctx[MAX_EVENTS];
 int isfirst=0;
@@ -261,19 +264,13 @@ VOID __dp_cmd_query(IN CONST TY_DP_QUERY_S *dp_qry)
         }
     }
 }
-void MsgHandler(void *msgData)
-{
-    ipc_buff *msgBuff = (ipc_buff *)msgData;
-    printf("Receive From Server: Type:[%d], Data:[\"%s\"]\n\n",
-           msgBuff->msg_type, msgBuff->msg_data);
-}
 extern void* app_main_loop(void*args);
 
 int main(int argc, char **argv)
 {
     OPERATE_RET op_ret = OPRT_OK;
     pthread_t t;
-    CHAR_T *cfg_str = NULL;
+    
     /*注册网关管理函数*/
     TY_GW_INFRA_CBS_S gw_cbs = {
         .gw_reset_cb       = __gw_reset_cb,
@@ -287,8 +284,8 @@ int main(int argc, char **argv)
         .raw   = __dp_cmd_raw,
         .query = __dp_cmd_query
     };
-    ipc_regist_receiver(MsgHandler, IPC_SERVER);
-    ipc_init(IPC_CLIENT);
+    ipc_regist_receiver(MsgHandler, IPC_CLIENT);
+    ipc_init(IPC_SERVER);
 
     char cfgfilePath[512]={0};
     printf("argc=%d",argc);
@@ -305,19 +302,19 @@ int main(int argc, char **argv)
     printf("app module debug level is info\r\n");
 
     printf("%s",tuya_iot_get_sdk_info());
-    cfg_str = __parse_config_file(cfgfilePath);
-    if (cfg_str == NULL) {
+    gCfg_str = __parse_config_file(cfgfilePath);
+    if (gCfg_str == NULL) {
         printf("parse json config failed\n");
         return 0;
     }
-    op_ret = user_iot_init(cfg_str);
+    op_ret = user_iot_init(gCfg_str);
     if (op_ret != OPRT_OK) {
         printf("user_iot_init err: %d", op_ret);
         return op_ret;
     }
 
     /*get uart info */
-    user_save_uartConfigure(cfg_str);
+    user_save_uartConfigure(gCfg_str);
 
     op_ret = user_svc_init((VOID *)&gw_cbs);
     if (op_ret != OPRT_OK) {
@@ -374,7 +371,7 @@ int main(int argc, char **argv)
             }else{
             }
         }
-        if(0!=user_save_slaveList(cfg_str)){
+        if(0!=user_save_slaveList(gCfg_str)){
             PR_ERR("can't load the slave device");
             exit(-1);
         }

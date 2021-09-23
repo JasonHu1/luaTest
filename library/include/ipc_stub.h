@@ -12,15 +12,17 @@
 /* 枚举值用以代表IPC角色 */
 typedef enum _IpcRole
 {
-    IPC_CLIENT = 1, /*IPC客户端*/
-    IPC_SERVER = 2  /*IPC服务端*/
+    IPC_CLIENT = 1, /*IPC客户端(HTTP Server)*/
+    IPC_SERVER = 2  /*IPC服务端(底层Lua解析程序)*/
 } IpcRole;
 
-/* 传递的消息类型 */
+/* 传递的消息类型(对应的消息体内容均为json格式字符串) */
 typedef enum _MsgType
 {
-    GATEWAY_INFO = 1,  /*网关的基本信息*/
-    GATEWAY_CONFIG = 2 /*网关的配置信息*/
+    GATEWAY_UART_INFO = 1,   /*请求/响应 网关的串口信息(Cli->Ser请求数据/Ser->Cli响应数据)*/
+    GATEWAY_UART_CONFIG = 2, /*配置 网关的串口信息(Cli->Ser发送串口配置信息)*/
+    DEV_DRIVE_INFO = 3,      /*请求/响应 设备驱动信息(Cli->Ser请求数据/Ser->Cli响应数据)*/
+    DEV_DRIVE_CONFIG = 4     /*配置 设备驱动信息(Cli->Ser发送设备配置信息)*/
 } MsgType;
 
 /* 传递消息的结构体 */

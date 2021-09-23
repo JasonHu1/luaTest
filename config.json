@@ -5,7 +5,7 @@
     "storage_path": "./",
     "script_path":"../../component/industry_lua_app",
     "sw_ver": "1.0.0",
-    "log_level": 4,
+    "log_level": 2,
     "user": [
         {
             "tp": 10,

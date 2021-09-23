@@ -27,4 +27,5 @@
  3rd-party/lua_530/include/lualib.h 3rd-party/lua_530/include/lua.h \
  3rd-party/lua_530/include/lauxlib.h \
  /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_subdev_api.h \
- /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_com_defs.h
+ /home/jason/code/tuya_library/ty_gw_zigbee_ext_sdk_linux-ubuntu-6.2.0_64Bit_3.0.1-beta.266/sdk/svc_gw_sdk_interface/include/tuya_gw_com_defs.h \
+ include/front_ipc.h
